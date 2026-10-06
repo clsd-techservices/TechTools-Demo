@@ -13,6 +13,8 @@
     "tools/remediation/index.html",
     "tools/remediation/presets.js",
     "tools/win32/index.html",
+    "tools/docagent/index.html",
+    "tools/docagent/presets.js",
     "samples/autopilot-sample-clean.csv",
     "samples/autopilot-sample-with-problems.csv",
     "guides/getting-started.html",

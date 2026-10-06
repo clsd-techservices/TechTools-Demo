@@ -169,6 +169,11 @@
             <div class="card-desc">Drop an MSI or EXE and get install, uninstall, and detection scripts, Intune settings, and a one-click .intunewin packager.</div>
             <div class="card-foot"><span class="pill green">Live</span><span class="card-ver">v2.0</span><span class="card-arrow">&rarr;</span></div>
           </a>
+          <a class="card" href="tools/docagent/index.html" style="--cc:#e67e22" data-tags="documentation doc agent knowledge base repository runbook sop write notes script docx word markdown ai">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6M9 17h4"/><path d="M17.5 9.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg></div><div class="card-title">Documentation Agent</div></div>
+            <div class="card-desc">Turn rough notes, scripts, or an old doc into a finished SOP, runbook, or reference, then file it in your knowledge repository or export it to Word.</div>
+            <div class="card-foot"><span class="pill green">Live</span><span class="pill blue">AI</span><span class="card-ver">v1.0</span><span class="card-arrow">&rarr;</span></div>
+          </a>
         </div>
 
         <!-- KIT -->
@@ -240,7 +245,7 @@ const isDemo = KitDemo.active, id = Kit.config.identity || {};
 document.getElementById('heroTitle').textContent = isDemo ? 'Intune tools, live demo' : `Intune tools for ${id.districtShort}`;
 document.getElementById('heroText').textContent = isDemo
   ? 'Every tool here runs against a simulated tenant with scripted results, so try anything. When you’re ready, build your own copy with your district’s name, colors, and logo.'
-  : 'Free, browser-based tools for building Intune remediations, packaging Win32 apps, and importing Autopilot devices.';
+  : 'Free, browser-based tools for building Intune remediations, packaging Win32 apps, importing Autopilot devices, and writing the documentation.';
 document.getElementById('heroActions').innerHTML = isDemo
   ? '<a class="tt-btn tt-btn--primary" href="setup.html" style="text-decoration:none">Build your own kit &rarr;</a>'
   : (Kit.config.configured ? '' : '<a class="tt-btn tt-btn--primary" href="setup.html" style="text-decoration:none">Run setup &rarr;</a>');
@@ -251,7 +256,7 @@ if (!isDemo) { document.getElementById('setupTitle').textContent = 'Kit Setup'; 
 
 // widgets
 const W = [
-  ['Intune tools', '3', 'Autopilot · Remediations · Win32', '#e67e22'],
+  ['Intune tools', '4', 'Autopilot · Remediations · Win32 · Docs', '#e67e22'],
   ['Ready-made scripts', '6', 'detection + remediation pairs', '#1abc9c'],
   ['Installer types', String(8), 'recognised without AI', '#8b5cf6'],
   [isDemo ? 'Sample devices' : 'AI provider', isDemo ? '10' : (KitAI.providers[Kit.config.ai?.provider]?.label || '—').split(' ')[0], isDemo ? 'scripted import outcomes' : (KitAI.getKey(Kit.config.ai?.provider) ? 'key saved in this browser' : 'asks for a key on first use'), 'var(--brand-pale)']
