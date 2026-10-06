@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Win32 App Builder · {{portalName}}</title>
+<link rel="stylesheet" href="../../assets/kit-theme-dark.css"/>
+<script src="../../kit-config.js"></script>
+<script src="../../kit-brand.js"></script>
+<script src="../../kit-demo.js"></script>
+<style>
+
+  /* ── Back button ── */
+  .back-btn{font-size:12px;font-weight:700;color:var(--brand-pale);text-decoration:none;padding:5px 12px;background:rgba(var(--brand-pale-rgb),.10);border:1px solid rgba(var(--brand-pale-rgb),.30);border-radius:6px;white-space:nowrap;flex-shrink:0}
+  .back-btn:hover{background:rgba(var(--brand-pale-rgb),.2);color:var(--text-primary)}
+  .demo-src{display:inline-block;margin-left:6px;font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--color-warning-bg);color:var(--color-warning)}
+  .help-open-btn {
+    margin-left: 10px; font-size: 12px; font-weight: 700; color: #22d3ee;
+    padding: 5px 12px; background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3);
+    border-radius: var(--radius-md); cursor: pointer; flex-shrink: 0;
+  }
+  .help-open-btn:hover { background: rgba(6,182,212,0.2); }
+
+  /* ── Page wrap ── */
+  .page-wrap { max-width: 1060px; margin: 0 auto; padding: var(--space-8) var(--space-6) 80px; }
+
+  /* ── Card section label ── */
+  .card-label {
+    font-size: 10px; font-family: var(--font-mono);
+    color: var(--brand-pale); letter-spacing: 1.8px;
+    text-transform: uppercase; margin-bottom: var(--space-4);
+  }
+
+  /* ── Form grid ── */
+  .form-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .form-grid, .form-grid-3 { grid-template-columns: 1fr; } }
+
+  /* ── Installer drop zone ── */
+  .drop-zone {
+    border: 2px dashed var(--border-glass); border-radius: var(--radius-lg);
+    padding: 26px 20px; text-align: center; cursor: pointer;
+    background: var(--glass-input); transition: border-color var(--transition-fast), background var(--transition-fast);
+  }
+  .drop-zone:hover, .drop-zone.drag { border-color: var(--brand-pale); background: rgba(var(--brand-pale-rgb),0.07); }
+  .dz-icon  { font-size: 26px; margin-bottom: 6px; color: var(--brand-pale); }
+  .dz-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .dz-sub   { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .file-info { margin-top: 14px; }
+  .fi-head {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;
+  }
+  .fi-name { color: var(--text-primary); font-weight: 600; word-break: break-all; }
+  .fi-mode { padding: 2px 10px; border-radius: var(--radius-sm); font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; }
+  .fi-mode--tpl { background: rgba(52,211,115,0.1); color: var(--color-success); border: 1px solid rgba(52,211,115,0.3); }
+  .fi-mode--rev { background: rgba(251,191,36,0.1); color: var(--color-warning); border: 1px solid rgba(251,191,36,0.3); }
+  .fi-mode--ai  { background: rgba(155,89,182,0.12); color: #c59af0; border: 1px solid rgba(155,89,182,0.3); }
+  .fi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px 14px; }
+  @media (max-width: 720px) { .fi-grid { grid-template-columns: 1fr 1fr; } }
+  .fi-item .k { font-size: 10px; font-family: var(--font-mono); color: var(--text-muted); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 2px; }
+  .fi-item .v { font-size: 12.5px; color: var(--text-primary); word-break: break-all; font-family: var(--font-mono); }
+  .fi-notes { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .fi-note {
+    font-size: 12px; line-height: 1.6; padding: 8px 12px; border-radius: var(--radius-md);
+    background: rgba(251,191,36,0.07); border: 1px solid rgba(251,191,36,0.22); color: rgba(253,224,122,0.9);
+  }
+  .fi-note.info { background: rgba(var(--brand-pale-rgb),0.06); border-color: rgba(var(--brand-pale-rgb),0.2); color: var(--text-secondary); }
+
+  /* ── Installer type chips ── */
+  .type-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .type-chip {
+    padding: 7px 16px; border-radius: var(--radius-md); font-size: 12px;
+    font-family: var(--font-mono); border: 1px solid var(--border-glass);
+    color: var(--text-muted); cursor: pointer; transition: all var(--transition-fast);
+    background: transparent;
+  }
+  .type-chip:hover { border-color: var(--border-glass-bright); color: var(--text-secondary); }
+  .type-chip.active { border-color: var(--brand-pale); background: rgba(var(--brand-pale-rgb),0.1); color: var(--brand-pale); }
+
+  /* ── Research status ── */
+  .research-status {
+    font-size: 12px; font-family: var(--font-mono);
+    padding: 8px 12px; background: rgba(var(--brand-pale-rgb),0.06);
+    border: 1px solid rgba(var(--brand-pale-rgb),0.2); border-radius: var(--radius-md);
+    margin-top: 8px; display: none;
+  }
+  .research-status.visible { display: block; }
+
+  /* ── Icon upload ── */
+  .icon-preview-box {
+    width: 80px; height: 80px; flex-shrink: 0;
+    border: 2px dashed var(--border-glass); border-radius: var(--radius-lg);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: border-color var(--transition-fast), background var(--transition-fast);
+    overflow: hidden; background: var(--glass-input);
+  }
+  .icon-preview-box:hover { border-color: var(--brand-pale); background: rgba(var(--brand-pale-rgb),0.06); }
+  .icon-preview-box img { width: 100%; height: 100%; object-fit: contain; }
+  .icon-placeholder { font-size: 10px; font-family: var(--font-mono); color: var(--text-muted); text-align: center; line-height: 1.5; padding: 8px; }
+
+  /* ── Progress steps ── */
+  .progress-steps { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--space-4); }
+  .progress-step {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; font-family: var(--font-mono); color: var(--text-muted);
+    padding: 8px 12px; border-radius: var(--radius-md);
+    border: 1px solid var(--border-glass); background: var(--glass-input);
+    transition: all 0.3s;
+  }
+  .progress-step.active { color: var(--brand-pale); border-color: rgba(var(--brand-pale-rgb),0.3); background: rgba(var(--brand-pale-rgb),0.06); }
+  .progress-step.done   { color: var(--color-success); border-color: rgba(52,211,115,0.25); background: rgba(52,211,115,0.04); }
+  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; transition: background 0.3s; }
+  .progress-step.active .step-dot { background: var(--brand-pale); animation: step-pulse 1s ease infinite; }
+  .progress-step.done   .step-dot { background: var(--color-success); }
+  @keyframes step-pulse { 0%,100%{opacity:1}50%{opacity:0.35} }
+
+  /* ── Generate button ── */
+  .generate-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--brand), var(--brand-pale));
+    border: none; border-radius: var(--radius-md); color: #fff;
+    font-family: var(--font-ui); font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: opacity 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 20px rgba(var(--brand-pale-rgb),0.2);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: var(--space-6);
+  }
+  .generate-btn:hover { opacity: 0.9; box-shadow: var(--shadow-blue); }
+  .generate-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+
+  /* ── ZIP download bar ── */
+  .zip-bar {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 14px 16px; margin-bottom: var(--space-5);
+    background: rgba(52,211,115,0.06); border: 1px solid rgba(52,211,115,0.25); border-radius: var(--radius-md);
+  }
+  .zip-bar .zb-text { flex: 1; min-width: 240px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
+  .zip-bar .zb-text strong { color: var(--color-success); }
+  .zip-btn {
+    padding: 10px 20px; border-radius: var(--radius-md); border: none; cursor: pointer;
+    background: linear-gradient(135deg,#1f9d57,#34d373); color: #fff; font-weight: 700; font-size: 13px;
+  }
+  .zip-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ── Spinner ── */
+  .btn-spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.25); border-top-color: #fff;
+    border-radius: 50%; animation: tt-spin 0.7s linear infinite; display: none;
+  }
+  .btn-spinner.on { display: block; }
+
+  /* ── Output section ── */
+  .output-section { display: none; scroll-margin-top: 96px; }
+  .output-section.visible { display: block; animation: fadeUp 0.3s ease both; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
+
+  /* ── Summary grid ── */
+  .summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .summary-item .s-label { font-size: 10px; font-family: var(--font-mono); color: var(--text-muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 3px; }
+  .summary-item .s-value { font-size: 13px; color: var(--text-primary); font-weight: 500; word-break: break-all; }
+
+  /* ── Script tabs ── */
+  .script-tabs { display: flex; gap: 8px; margin-bottom: var(--space-4); flex-wrap: wrap; }
+  .script-tab {
+    padding: 7px 16px; border-radius: var(--radius-md); font-size: 12px;
+    font-family: var(--font-mono); border: 1px solid var(--border-glass);
+    color: var(--text-muted); cursor: pointer; transition: all var(--transition-fast);
+    background: transparent;
+  }
+  .script-tab:hover { border-color: var(--border-glass-bright); color: var(--text-secondary); }
+  .script-tab.active { border-color: var(--brand-pale); background: rgba(var(--brand-pale-rgb),0.1); color: var(--brand-pale); }
+
+  /* ── Script blocks ── */
+  .script-block { display: none; }
+  .script-block.visible { display: block; }
+  .script-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(var(--brand-rgb),0.18);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    border: 1px solid var(--border-glass); border-bottom: none;
+  }
+  .script-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-family: var(--font-mono); color: var(--text-secondary); }
+
+  .s-badge { padding: 2px 8px; border-radius: var(--radius-sm); font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; font-family: var(--font-mono); }
+  .s-badge--install   { background: rgba(var(--brand-pale-rgb),0.12);  color: var(--brand-pale);   border: 1px solid rgba(var(--brand-pale-rgb),0.3); }
+  .s-badge--uninstall { background: rgba(248,113,113,0.1);  color: var(--color-error);      border: 1px solid rgba(248,113,113,0.25); }
+  .s-badge--detect    { background: rgba(52,211,115,0.1);   color: var(--color-success);    border: 1px solid rgba(52,211,115,0.25); }
+  .s-badge--command   { background: rgba(251,191,36,0.1);   color: var(--color-warning);    border: 1px solid rgba(251,191,36,0.25); }
+  .s-badge--packager  { background: rgba(155,89,182,0.12);  color: #c59af0;                 border: 1px solid rgba(155,89,182,0.3); }
+
+  .copy-btn {
+    background: transparent; border: 1px solid var(--border-glass);
+    color: var(--text-muted); font-family: var(--font-mono); font-size: 11px;
+    padding: 4px 12px; border-radius: var(--radius-sm); cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+  .copy-btn:hover { border-color: var(--brand-pale); color: var(--brand-pale); }
+  .copy-btn.copied { border-color: var(--color-success); color: var(--color-success); }
+
+  pre {
+    padding: 16px 20px; font-family: var(--font-mono); font-size: 12.5px;
+    line-height: 1.75; overflow-x: auto; white-space: pre-wrap;
+    word-break: break-word; color: #a8c4f0;
+    max-height: 480px; overflow-y: auto;
+    background: rgba(2,5,14,0.75);
+    border: 1px solid var(--border-glass); border-top: none;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+  }
+  pre::-webkit-scrollbar { width: 5px; height: 5px; }
+  pre::-webkit-scrollbar-track { background: transparent; }
+  pre::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 3px; }
+
+  /* ── Packager callout ── */
+  .packager-callout {
+    background: rgba(155,89,182,0.07); border: 1px solid rgba(155,89,182,0.22);
+    border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 12px;
+    font-size: 12px; font-family: var(--font-mono); color: rgba(197,154,240,0.85); line-height: 1.7;
+  }
+  .packager-callout strong { color: #c59af0; }
+  .packager-callout code  { color: var(--brand-pale); }
+</style>
+</head>
+<body>
+<div class="tt-app">
+
+  <!-- ── HEADER ── -->
+  <header class="tt-header">
+    <a href="../../index.html" class="back-btn">&larr; {{portalName}}</a>
+    <img src="../../assets/kit-logo.svg" alt="{{districtShort}} logo" class="tt-header__logo" style="max-width:120px;object-fit:contain"/>
+    <div class="tt-header__divider"></div>
+    <div>
+      <div class="tt-header__title">Win32 App Builder</div>
+      <div class="tt-header__subtitle">{{districtName}} · {{deptName}}</div>
+    </div>
+    <span class="tt-header__badge">Intune Packaging</span>
+    <button class="help-open-btn" onclick="showToolHelp(true)">? Help</button>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <main class="tt-main">
+  <div class="page-wrap" style="padding-top:0">
+
+    <!-- INSTALLER FILE -->
+    <div class="tt-card" style="margin-bottom:var(--space-5)">
+      <div class="tt-card__body">
+        <div class="card-label">📥 Installer File</div>
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('installerInput').click()">
+          <div class="dz-icon">⬆</div>
+          <div class="dz-title">Drop an .msi or .exe here, or click to browse</div>
+          <div class="dz-sub">Read locally in your browser — the file is never uploaded anywhere. Leave empty to build from an app name with AI instead.</div>
+        </div>
+        <input type="file" id="installerInput" accept=".msi,.exe" style="display:none" onchange="handleInstallerPick(this)"/>
+        <div class="file-info" id="fileInfo" style="display:none">
+          <div class="fi-head">
+            <span class="fi-name" id="fiName"></span>
+            <span id="fiSize"></span>
+            <span class="fi-mode" id="fiMode"></span>
+            <button class="tt-btn tt-btn--danger" style="height:28px;font-size:11px;margin-left:auto" onclick="clearInstaller()">✕ Remove</button>
+          </div>
+          <div class="fi-grid" id="fiGrid"></div>
+          <div class="fi-notes" id="fiNotes"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APP DETAILS -->
+    <div class="tt-card" style="margin-bottom:var(--space-5)">
+      <div class="tt-card__body">
+        <div class="card-label">📦 Application Details</div>
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="tt-form-group" style="margin:0">
+            <label class="tt-label">Application Name</label>
+            <input class="tt-input" type="text" id="appName" placeholder="e.g. Google Chrome"/>
+          </div>
+          <div class="tt-form-group" style="margin:0">
+            <label class="tt-label">Version (optional)</label>
+            <input class="tt-input" type="text" id="appVersion" placeholder="e.g. 124.0 or leave blank"/>
+          </div>
+          <div class="tt-form-group" style="margin:0">
+            <label class="tt-label">Publisher</label>
+            <input class="tt-input" type="text" id="appPublisher" placeholder="e.g. Google LLC"/>
+          </div>
+          <div class="tt-form-group" style="margin:0">
+            <label class="tt-label">Install Scope</label>
+            <select class="tt-select" id="installScope">
+              <option value="device">Device (System context)</option>
+              <option value="user">User context</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="tt-form-group" style="margin-bottom:14px">
+          <label class="tt-label">Installer Type</label>
+          <div class="type-chips">
+            <button class="type-chip active" onclick="setInstallerType(this,'exe')" id="type-exe">EXE</button>
+            <button class="type-chip" onclick="setInstallerType(this,'msi')" id="type-msi">MSI</button>
+            <button class="type-chip" onclick="setInstallerType(this,'script')" id="type-script">Script-based</button>
+          </div>
+        </div>
+
+        <div class="form-grid" id="installerFields">
+          <div class="tt-form-group" style="margin:0">
+            <label class="tt-label">Installer Filename</label>
+            <input class="tt-input" type="text" id="installerFile" placeholder="e.g. ChromeSetup.exe"/>
+          </div>
+          <div class="tt-form-group" style="margin:0">
+            <label class="tt-label" id="silentFlagLabel">Silent Install Flags</label>
+            <input class="tt-input" type="text" id="silentFlags" placeholder="e.g. /silent /install"/>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap" id="researchRow">
+          <button class="tt-btn tt-btn--secondary" id="researchBtn" onclick="researchApp()">
+            <span id="researchBtnText">🔍 Research App &amp; Auto-fill</span>
+            <div class="tt-spinner" id="researchSpinner" style="display:none"></div>
+          </button>
+          <div class="research-status" id="researchStatus"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DETECTION -->
+    <div class="tt-card" style="margin-bottom:var(--space-5)">
+      <div class="tt-card__body">
+        <div class="card-label">🎯 Detection Configuration</div>
+        <div class="form-grid-3">
+          <div class="tt-form-group" style="margin:0">
+            <label class="tt-label">Detection Method</label>
+            <select class="tt-select" id="detectMethod" onchange="updateDetectFields()">
+              <option value="uninstall">Uninstall entry (name + version)</option>
+              <option value="msi">MSI Product Code</option>
+              <option value="registry">Registry Value</option>
+              <option value="file">File/Folder Exists</option>
+              <option value="version">File Version</option>
+              <option value="script">Custom Script (AI)</option>
+            </select>
+          </div>
+          <div class="tt-form-group" style="margin:0" id="detectField1">
+            <label class="tt-label" id="detect1Label">DisplayName match</label>
+            <input class="tt-input" type="text" id="detect1" placeholder="e.g. Google Chrome*"/>
+          </div>
+          <div class="tt-form-group" style="margin:0" id="detectField2">
+            <label class="tt-label" id="detect2Label">Minimum version</label>
+            <input class="tt-input" type="text" id="detect2" placeholder="e.g. 124.0.6367.60"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ICON UPLOAD -->
+    <div class="tt-card" style="margin-bottom:var(--space-5)">
+      <div class="tt-card__body">
+        <div class="card-label">🖼️ App Icon</div>
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+          <div class="icon-preview-box" id="iconBox" onclick="document.getElementById('iconInput').click()">
+            <div class="icon-placeholder">Click to<br>add icon</div>
+          </div>
+          <div>
+            <div style="font-size:13px;color:var(--text-primary);font-weight:600;margin-bottom:4px;">Upload App Icon</div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.6;max-width:420px;">PNG or JPG, ideally 512×512 (Intune's logo upload only accepts PNG/JPG). Pulled from the .exe automatically when it has one — upload your own to override.</div>
+            <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <button class="tt-btn tt-btn--secondary" style="height:32px;font-size:12px" onclick="document.getElementById('iconInput').click()">📁 Browse</button>
+              <button class="tt-btn tt-btn--danger" id="iconClearBtn" style="height:32px;font-size:12px;display:none" onclick="clearIcon()">✕ Remove</button>
+              <span id="iconFileName" style="font-size:11px;font-family:var(--font-mono);color:var(--text-muted)"></span>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="iconInput" accept=".png,.jpg,.jpeg" style="display:none" onchange="handleIconUpload(this)"/>
+      </div>
+    </div>
+
+    <!-- ADDITIONAL CONFIG -->
+    <div class="tt-card" style="margin-bottom:var(--space-5)">
+      <div class="tt-card__body">
+        <div class="card-label">⚙️ Additional Configuration</div>
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="tt-form-group" style="margin:0">
+            <label class="tt-label">Min OS Version</label>
+            <select class="tt-select" id="minOS">
+              <option value="W10_1903">Windows 10 1903+</option>
+              <option value="W10_2004">Windows 10 2004+</option>
+              <option value="W10_21H2" selected>Windows 10 21H2+</option>
+              <option value="W11_21H2">Windows 11 21H2+</option>
+              <option value="W11_22H2">Windows 11 22H2+</option>
+            </select>
+          </div>
+          <div class="tt-form-group" style="margin:0">
+            <label class="tt-label">Architecture</label>
+            <select class="tt-select" id="arch">
+              <option value="x64" selected>x64 (64-bit)</option>
+              <option value="x86">x86 (32-bit)</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+          <div class="tt-form-group" style="margin:0">
+            <label class="tt-label">Restart Behavior</label>
+            <select class="tt-select" id="restart">
+              <option value="suppress">Suppress restart</option>
+              <option value="allow">Allow restart</option>
+              <option value="force">Force restart</option>
+            </select>
+          </div>
+          <div class="tt-form-group" style="margin:0">
+            <label class="tt-label">Max Install Time (min)</label>
+            <input class="tt-input" type="text" id="installTime" value="60"/>
+          </div>
+        </div>
+        <div class="tt-form-group" style="margin:0">
+          <label class="tt-label">Notes / Special Requirements</label>
+          <textarea class="tt-textarea" id="appNotes" rows="2" placeholder="Any caveats, dependencies, or district-specific notes..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERROR -->
+    <div class="tt-alert tt-alert--error" id="errorMsg" style="display:none;margin-bottom:var(--space-4)"></div>
+
+    <!-- PROGRESS -->
+    <div class="progress-steps" id="progressSteps" style="display:none">
+      <div class="progress-step" id="step1"><div class="step-dot"></div><span>Analyzing application details...</span></div>
+      <div class="progress-step" id="step2"><div class="step-dot"></div><span id="step2Text">Generating install &amp; uninstall scripts...</span></div>
+      <div class="progress-step" id="step3"><div class="step-dot"></div><span>Building detection script...</span></div>
+      <div class="progress-step" id="step4"><div class="step-dot"></div><span>Assembling Intune configuration...</span></div>
+      <div class="progress-step" id="step5"><div class="step-dot"></div><span>Building packager...</span></div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn" onclick="generate()">
+      <div class="btn-spinner" id="spinner"></div>
+      <span id="btnText">⚙️ Build Win32 Package</span>
+    </button>
+
+    <!-- OUTPUT -->
+    <div class="output-section" id="outputSection">
+
+      <!-- ZIP download -->
+      <div class="zip-bar" id="zipBar" style="display:none">
+        <div class="zb-text">
+          <strong>Package ready.</strong> The ZIP holds the installer, scripts, icon and settings sheet.
+          Extract it and double-click <code>Build-IntuneWin.cmd</code> to produce the <code>.intunewin</code>.
+        </div>
+        <button class="zip-btn" id="zipBtn" onclick="downloadZip()">⬇ Download Package ZIP</button>
+      </div>
+
+      <!-- Summary -->
+      <div class="tt-card" style="margin-bottom:var(--space-5)">
+        <div class="tt-card__body">
+          <div class="card-label">📋 Intune Configuration Summary</div>
+          <div class="summary-grid" id="summaryGrid"></div>
+        </div>
+      </div>
+
+      <!-- Scripts -->
+      <div class="tt-card">
+        <div class="tt-card__body">
+          <div class="card-label">📄 Generated Scripts &amp; Packager</div>
+          <div class="script-tabs">
+            <button class="script-tab active" onclick="showTab('install',this)">Install</button>
+            <button class="script-tab" onclick="showTab('uninstall',this)">Uninstall</button>
+            <button class="script-tab" onclick="showTab('detect',this)">Detection</button>
+            <button class="script-tab" onclick="showTab('command',this)">Intune Settings</button>
+            <button class="script-tab" onclick="showTab('packager',this)" style="border-color:rgba(155,89,182,0.3);color:#9b6cd0">🚀 Packager</button>
+          </div>
+
+          <div class="script-block visible" id="tab-install">
+            <div class="script-header">
+              <div class="script-title"><span class="s-badge s-badge--install">Install</span> install.ps1</div>
+              <button class="copy-btn" onclick="copyCode('code-install',this)">⎘ Copy</button>
+            </div>
+            <pre id="code-install"></pre>
+          </div>
+
+          <div class="script-block" id="tab-uninstall">
+            <div class="script-header">
+              <div class="script-title"><span class="s-badge s-badge--uninstall">Uninstall</span> uninstall.ps1</div>
+              <button class="copy-btn" onclick="copyCode('code-uninstall',this)">⎘ Copy</button>
+            </div>
+            <pre id="code-uninstall"></pre>
+          </div>
+
+          <div class="script-block" id="tab-detect">
+            <div class="script-header">
+              <div class="script-title"><span class="s-badge s-badge--detect">Detection</span> detect.ps1</div>
+              <button class="copy-btn" onclick="copyCode('code-detect',this)">⎘ Copy</button>
+            </div>
+            <pre id="code-detect"></pre>
+          </div>
+
+          <div class="script-block" id="tab-command">
+            <div class="script-header">
+              <div class="script-title"><span class="s-badge s-badge--command">Intune</span> INTUNE-SETTINGS.txt</div>
+              <button class="copy-btn" onclick="copyCode('code-command',this)">⎘ Copy</button>
+            </div>
+            <pre id="code-command"></pre>
+          </div>
+
+          <div class="script-block" id="tab-packager">
+            <div class="packager-callout" id="packagerCallout"></div>
+            <div class="script-header">
+              <div class="script-title"><span class="s-badge s-badge--packager">PS1</span> <span id="packagerName">Run-Win32Packager.ps1</span></div>
+              <button class="copy-btn" onclick="copyCode('code-packager',this)">⎘ Copy</button>
+            </div>
+            <pre id="code-packager"></pre>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /output -->
+
+  </div>
+  </main>
+
+  <footer class="tt-footer">
+    <span>&copy; {{year}} {{districtShort}} {{deptName}} &middot; {{credit}} &middot; MIT License</span>
+    <span>Win32 Builder v2.0</span>
+  </footer>
+
+</div><!-- /tt-app -->
+
+<script>
+// ═════════════════════════════════════════════════════════════════════════
+// Win32 App Builder v2.0
+//  • Drop an .msi/.exe → parsed in-browser (nothing uploaded)
+//  • Known installer frameworks → deterministic script templates
+//  • Unknown EXE or no file → AI via KitAI (the district's own provider + key, asked for on first use)
+//  • ZIP download: installer + scripts + icon + settings + Build-IntuneWin.cmd
+// ═════════════════════════════════════════════════════════════════════════
+
+// District names for generated scripts (kit-config.js)
+const T = Kit.tokens();
+let lastAiLabel = 'AI';
+
+// ── State ─────────────────────────────────────────────────────────────────
+let installerType = 'exe';
+let iconData      = null;   // data: URL
+let iconFileName  = null;
+let iconIsAuto    = false;
+let installerBlob = null;   // File
+let installerMeta = null;
+let lastBuild     = null;
+
+// ═════════════════════════════════════════════════════════════════════════
+// Installer frameworks (silent switches + uninstall behaviour)
+// ═════════════════════════════════════════════════════════════════════════
+const FRAMEWORKS = {
+  msi: { label: 'Windows Installer (MSI)', install: '/qn /norestart ALLUSERS=1', confident: true },
+  inno: { label: 'Inno Setup', install: '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-',
+          uninstFlags: '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART', useQuiet: false, confident: true },
+  nsis: { label: 'NSIS (Nullsoft)', install: '/S', uninstFlags: '/S', useQuiet: false, nsis: true, confident: true,
+          note: 'NSIS switches are case-sensitive (/S). Some vendors disable silent mode — test once on a lab machine.' },
+  burn: { label: 'WiX Burn bundle', install: '/quiet /norestart', uninstFlags: '/quiet /norestart',
+          useQuiet: true, burn: true, confident: true },
+  installshield: { label: 'InstallShield', install: '/s /v"/qn /norestart"', uninstFlags: '/s', useQuiet: true, confident: false,
+          note: 'InstallShield comes in two flavours. /s /v"/qn" works for "Basic MSI" projects; "InstallScript" projects need a recorded setup.iss (setup.exe /r) — test before deploying.' },
+  advinst: { label: 'Advanced Installer', install: '/exenoui /qn /norestart', uninstFlags: '/qn /norestart', useQuiet: true, confident: false,
+          note: 'Advanced Installer EXEs usually wrap an MSI; /exenoui /qn is the documented silent switch. Verify on a lab machine.' },
+  setupfactory: { label: 'Setup Factory', install: '/S', uninstFlags: '/S', useQuiet: true, confident: false,
+          note: 'Setup Factory supports /S, but vendors can disable it. Verify on a lab machine.' },
+  squirrel: { label: 'Squirrel (per-user)', install: '--silent', uninstFlags: '--uninstall -s', useQuiet: true, confident: false,
+          note: 'Squirrel installers only install per-user into %LocalAppData%. Install context is set to User — or check whether the vendor offers a machine-wide MSI (preferred for labs).' },
+};
+
+// ═════════════════════════════════════════════════════════════════════════
+// Byte helpers
+// ═════════════════════════════════════════════════════════════════════════
+async function readSlice(file, start, len) {
+  const end = Math.min(file.size, start + len);
+  if (start >= end) return new Uint8Array(0);
+  return new Uint8Array(await file.slice(start, end).arrayBuffer());
+}
+const u16 = (b, o) => (o + 1 < b.length) ? (b[o] | (b[o + 1] << 8)) : 0;
+const u32 = (b, o) => (o + 3 < b.length) ? ((b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)) >>> 0) : 0;
+function utf16(b, o, len) {
+  let s = '';
+  for (let i = 0; i + 1 < len && o + i + 1 < b.length; i += 2) {
+    const c = u16(b, o + i); if (!c) break; s += String.fromCharCode(c);
+  }
+  return s;
+}
+function bytesToLatin1(b) {
+  let s = ''; const CH = 0x8000;
+  for (let i = 0; i < b.length; i += CH) s += String.fromCharCode.apply(null, b.subarray(i, i + CH));
+  return s;
+}
+const hasStr = (hay, needle) => hay.includes(needle) || hay.includes(needle.split('').join('\0'));
+function fmtSize(n) {
+  if (n >= 1073741824) return (n / 1073741824).toFixed(2) + ' GB';
+  if (n >= 1048576) return (n / 1048576).toFixed(1) + ' MB';
+  return Math.max(1, Math.round(n / 1024)) + ' KB';
+}
+function blobToDataURL(blob) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+}
+function loadImage(src) {
+  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('image decode failed')); i.src = src; });
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Compound File (OLE/CFB) reader — lazy, reads only the sectors it needs
+// ═════════════════════════════════════════════════════════════════════════
+async function openCFB(file) {
+  const h = await readSlice(file, 0, 512);
+  const sig = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+  if (!sig.every((v, i) => h[i] === v)) throw new Error('Not a valid MSI (compound-file signature missing)');
+  const secSize = 1 << u16(h, 0x1E), miniSize = 1 << u16(h, 0x20);
+  const numFat = u32(h, 0x2C), dirStart = u32(h, 0x30), miniCutoff = u32(h, 0x38);
+  const miniFatStart = u32(h, 0x3C);
+  const END = 0xFFFFFFFA;
+
+  async function readSectors(list) {
+    const out = new Uint8Array(list.length * secSize);
+    let i = 0;
+    while (i < list.length) {
+      let j = i;
+      while (j + 1 < list.length && list[j + 1] === list[j] + 1) j++;
+      const bytes = await readSlice(file, (list[i] + 1) * secSize, (j - i + 1) * secSize);
+      out.set(bytes, i * secSize);
+      i = j + 1;
+    }
+    return out;
+  }
+  const asU32 = (bytes) => new Uint32Array(bytes.buffer, bytes.byteOffset, Math.floor(bytes.length / 4));
+
+  // FAT sector list from header DIFAT + DIFAT chain
+  const fatSecs = [];
+  for (let i = 0; i < 109 && fatSecs.length < numFat; i++) { const s = u32(h, 0x4C + i * 4); if (s < END) fatSecs.push(s); }
+  let difat = u32(h, 0x44), guard = 0;
+  while (fatSecs.length < numFat && difat < END && guard++ < 100000) {
+    const b = await readSlice(file, (difat + 1) * secSize, secSize);
+    const per = secSize / 4 - 1;
+    for (let i = 0; i < per && fatSecs.length < numFat; i++) { const s = u32(b, i * 4); if (s < END) fatSecs.push(s); }
+    difat = u32(b, per * 4);
+  }
+  const fat = asU32(await readSectors(fatSecs));
+  const chain = (start, table) => {
+    const out = []; let s = start;
+    while (s < END && s < table.length && out.length <= table.length) { out.push(s); s = table[s]; }
+    return out;
+  };
+
+  const dirBytes = await readSectors(chain(dirStart, fat));
+  const entries = [];
+  for (let o = 0; o + 128 <= dirBytes.length; o += 128) {
+    const type = dirBytes[o + 66];
+    if (!type) continue;
+    entries.push({ name: utf16(dirBytes, o, u16(dirBytes, o + 64)), type, start: u32(dirBytes, o + 116), size: u32(dirBytes, o + 120) });
+  }
+  const root = entries.find(e => e.type === 5);
+  let miniStream = null, miniFat = null;
+
+  async function readStream(entry) {
+    if (!entry) return null;
+    if (entry.size < miniCutoff) {
+      if (!miniStream) {
+        miniStream = await readSectors(chain(root.start, fat));
+        miniFat = asU32(await readSectors(chain(miniFatStart, fat)));
+      }
+      const out = new Uint8Array(entry.size); let p = 0;
+      for (const s of chain(entry.start, miniFat)) {
+        const n = Math.min(miniSize, entry.size - p); if (n <= 0) break;
+        out.set(miniStream.subarray(s * miniSize, s * miniSize + n), p); p += n;
+      }
+      return out;
+    }
+    return (await readSectors(chain(entry.start, fat))).subarray(0, entry.size);
+  }
+  return { entries, readStream };
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// MSI parser — Property table + SummaryInformation
+// ═════════════════════════════════════════════════════════════════════════
+const MSI_CHARSET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz._';
+function msiDecodeName(n) {
+  let out = '';
+  for (let i = 0; i < n.length; i++) {
+    const c = n.charCodeAt(i);
+    if (c >= 0x3800 && c < 0x4800) { const x = c - 0x3800; out += MSI_CHARSET[x & 0x3F] + MSI_CHARSET[(x >> 6) & 0x3F]; }
+    else if (c >= 0x4800 && c < 0x4840) out += MSI_CHARSET[c - 0x4800];
+    else if (c === 0x4840) out += '!';
+    else out += n[i];
+  }
+  return out;
+}
+function makeDecoder(cp) {
+  const label = cp === 65001 ? 'utf-8' : (cp ? 'windows-' + cp : 'windows-1252');
+  try { return new TextDecoder(label); } catch { return new TextDecoder('windows-1252'); }
+}
+
+async function parseMsi(file) {
+  const cfb = await openCFB(file);
+  const byName = {};
+  for (const e of cfb.entries) byName[msiDecodeName(e.name)] = e;
+
+  const pool = await cfb.readStream(byName['!_StringPool']);
+  const data = await cfb.readStream(byName['!_StringData']);
+  const propT = await cfb.readStream(byName['!Property']);
+  if (!pool || !data || !propT) throw new Error('MSI string pool or Property table not found');
+
+  const cpRaw = u32(pool, 0);
+  const longIds = (cpRaw & 0x80000000) !== 0;
+  const dec = makeDecoder(cpRaw & 0xFFFF);
+  const strings = [''];
+  const count = pool.length / 4;
+  let n = 1, off = 0, i = 1;
+  while (i < count) {
+    const len16 = u16(pool, i * 4), refs = u16(pool, i * 4 + 2);
+    if (len16 === 0 && refs === 0) { strings[n++] = ''; i++; continue; }
+    let len;
+    if (len16 === 0) { len = (u16(pool, i * 4 + 6) << 16) + u16(pool, i * 4 + 4); i += 2; }
+    else { len = len16; i += 1; }
+    strings[n++] = dec.decode(data.subarray(off, off + len)); off += len;
+  }
+
+  const sz = longIds ? 3 : 2;
+  const rows = Math.floor(propT.length / (2 * sz));
+  const idx = (o) => sz === 2 ? u16(propT, o) : (u16(propT, o) | (propT[o + 2] << 16));
+  const props = {};
+  for (let r = 0; r < rows; r++) {
+    const k = strings[idx(r * sz)], v = strings[idx(rows * sz + r * sz)];
+    if (k) props[k] = v ?? '';
+  }
+
+  // SummaryInformation → Template ("x64;1033") and word count (per-user flag)
+  let platform = '', author = '';
+  try {
+    const si = await cfb.readStream(cfb.entries.find(e => e.name === '\u0005SummaryInformation'));
+    if (si) {
+      const so = u32(si, 44), cnt = u32(si, so + 4);
+      for (let k = 0; k < cnt; k++) {
+        const pid = u32(si, so + 8 + k * 8), po = so + u32(si, so + 12 + k * 8);
+        if (u32(si, po) === 30) {
+          const l = u32(si, po + 4);
+          const s = bytesToLatin1(si.subarray(po + 8, po + 8 + l)).replace(/\0+$/, '');
+          if (pid === 7) platform = s; if (pid === 4) author = s;
+        }
+      }
+    }
+  } catch { /* summary info is optional */ }
+
+  const plat = (platform.split(';')[0] || '').trim();
+  const notes = [];
+  if (!props.ALLUSERS) notes.push({ t: 'info', m: 'MSI has no ALLUSERS property (defaults to per-user). The install script passes ALLUSERS=1 to force a per-machine install.' });
+  if (props.ALLUSERS === '2' && props.MSIINSTALLPERUSER === '1') notes.push({ t: 'warn', m: 'This is a dual-purpose MSI that defaults to per-user. ALLUSERS=1 is passed for a device install — keep it unless you want per-user.' });
+  if (plat === 'Arm64') notes.push({ t: 'warn', m: 'This MSI targets ARM64.' });
+
+  return {
+    kind: 'msi', framework: 'msi',
+    productName: props.ProductName || '', productVersion: props.ProductVersion || '',
+    manufacturer: props.Manufacturer || author || '', productCode: props.ProductCode || '',
+    upgradeCode: props.UpgradeCode || '', allUsers: props.ALLUSERS || '', platform: plat, notes,
+  };
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// EXE parser — PE headers, version resource, framework fingerprint, icon
+// ═════════════════════════════════════════════════════════════════════════
+function makeResReader(buf, base, secVA) {
+  function dir(off) {
+    const out = [], named = u16(buf, off + 12), ids = u16(buf, off + 14);
+    for (let i = 0; i < named + ids && i < 4096; i++) { const e = off + 16 + i * 8; out.push({ name: u32(buf, e), ptr: u32(buf, e + 4) }); }
+    return out;
+  }
+  function leaf(ptr) {
+    let p = ptr, g = 0;
+    while ((p & 0x80000000) && g++ < 4) { const d = dir(base + (p & 0x7FFFFFFF)); if (!d.length) return null; p = d[0].ptr; }
+    const de = base + p, rva = u32(buf, de), size = u32(buf, de + 4), o = rva - secVA;
+    if (o < 0 || o + size > buf.length) return null;
+    return buf.subarray(o, o + size);
+  }
+  function list(type) {
+    const t = dir(base).find(e => !(e.name & 0x80000000) && e.name === type);
+    if (!t || !(t.ptr & 0x80000000)) return [];
+    return dir(base + (t.ptr & 0x7FFFFFFF))
+      .map(e => ({ id: (e.name & 0x80000000) ? null : e.name, data: leaf(e.ptr) }))
+      .filter(x => x.data);
+  }
+  return { list };
+}
+
+function parseVerBlock(b, o) {
+  const len = u16(b, o), vlen = u16(b, o + 2), type = u16(b, o + 4);
+  let p = o + 6, key = '';
+  while (p + 1 < b.length) { const c = u16(b, p); p += 2; if (!c) break; key += String.fromCharCode(c); }
+  p = (p + 3) & ~3;
+  let value = null;
+  if (vlen) {
+    if (type === 1) { value = utf16(b, p, vlen * 2); p += vlen * 2; }
+    else { value = b.subarray(p, p + vlen); p += vlen; }
+  }
+  p = (p + 3) & ~3;
+  const end = Math.min(o + len, b.length), children = [];
+  while (len && p + 6 < end) {
+    const ch = parseVerBlock(b, p);
+    if (!ch.len) break;
+    children.push(ch); p = (ch.end + 3) & ~3;
+  }
+  return { key, value, children, end, len };
+}
+
+function parseVersionInfo(data) {
+  const root = parseVerBlock(data, 0), out = {};
+  if (root.value instanceof Uint8Array && u32(root.value, 0) === 0xFEEF04BD) {
+    const v = root.value, f = (ms, ls) => [u32(v, ms) >>> 16, u32(v, ms) & 0xFFFF, u32(v, ls) >>> 16, u32(v, ls) & 0xFFFF].join('.');
+    out.FixedFileVersion = f(8, 12); out.FixedProductVersion = f(16, 20);
+  }
+  const sfi = root.children.find(c => c.key === 'StringFileInfo');
+  for (const table of (sfi ? sfi.children : [])) {
+    for (const s of table.children) {
+      let v = s.value;
+      if (v instanceof Uint8Array) v = utf16(v, 0, v.length);
+      if (v && !(s.key in out)) out[s.key] = String(v).trim();
+    }
+  }
+  return out;
+}
+
+async function extractExeIcon(res) {
+  const groups = res.list(14);
+  if (!groups.length) return null;
+  const g = groups[0].data, count = u16(g, 4);
+  let best = null;
+  for (let i = 0; i < count; i++) {
+    const o = 6 + i * 14, w = g[o] || 256, bc = u16(g, o + 6), id = u16(g, o + 12);
+    if (!best || w > best.w || (w === best.w && bc > best.bc)) best = { w, bc, id, o };
+  }
+  if (!best || best.w < 32) return null;
+  const ic = res.list(3).find(x => x.id === best.id);
+  if (!ic) return null;
+  const d = ic.data;
+  if (d[0] === 0x89 && d[1] === 0x50 && d[2] === 0x4E && d[3] === 0x47) return blobToDataURL(new Blob([d], { type: 'image/png' }));
+  // Raw DIB → wrap as a one-image .ico, let the browser decode it, re-encode as PNG
+  const ico = new Uint8Array(22 + d.length), dv = new DataView(ico.buffer);
+  dv.setUint16(2, 1, true); dv.setUint16(4, 1, true);
+  ico.set(g.subarray(best.o, best.o + 12), 6);
+  dv.setUint32(14, d.length, true); dv.setUint32(18, 22, true);
+  ico.set(d, 22);
+  const url = URL.createObjectURL(new Blob([ico], { type: 'image/x-icon' }));
+  try {
+    const img = await loadImage(url), c = document.createElement('canvas');
+    c.width = img.naturalWidth || best.w; c.height = img.naturalHeight || best.w;
+    c.getContext('2d').drawImage(img, 0, 0);
+    return c.toDataURL('image/png');
+  } catch { return null; } finally { URL.revokeObjectURL(url); }
+}
+
+async function parseExe(file) {
+  const head = await readSlice(file, 0, 65536);
+  if (head[0] !== 0x4D || head[1] !== 0x5A) throw new Error('Not a Windows executable (MZ header missing)');
+  const pe = u32(head, 0x3C);
+  if (u32(head, pe) !== 0x4550) throw new Error('PE header not found');
+  const machine = u16(head, pe + 4), nsec = u16(head, pe + 6), optSize = u16(head, pe + 20), opt = pe + 24;
+  const magic = u16(head, opt), dd = opt + (magic === 0x20B ? 112 : 96);
+  const rsrcRVA = u32(head, dd + 16);
+  const secs = [];
+  for (let i = 0; i < nsec; i++) {
+    const o = opt + optSize + i * 40;
+    secs.push({
+      name: bytesToLatin1(head.subarray(o, o + 8)).replace(/\0+$/, ''),
+      va: u32(head, o + 12), rawSize: u32(head, o + 16), raw: u32(head, o + 20), vsize: u32(head, o + 8),
+    });
+  }
+  const overlay = secs.reduce((m, s) => Math.max(m, s.raw + s.rawSize), 0);
+
+  let ver = {}, manifest = '', rsrcBytes = new Uint8Array(0), res = null;
+  const rs = secs.find(s => rsrcRVA >= s.va && rsrcRVA < s.va + Math.max(s.vsize, s.rawSize));
+  if (rs) {
+    rsrcBytes = await readSlice(file, rs.raw, Math.min(rs.rawSize, 48 * 1048576));
+    res = makeResReader(rsrcBytes, rsrcRVA - rs.va, rs.va);
+    try { const v = res.list(16)[0]; if (v) ver = parseVersionInfo(v.data); } catch { /* malformed version block */ }
+    try { const m = res.list(24)[0]; if (m) manifest = new TextDecoder('utf-8').decode(m.data); } catch { }
+  }
+
+  // Fingerprint: version strings + manifest + rsrc + first 2 MB + first 1 MB of overlay
+  const front = await readSlice(file, 0, 2 * 1048576);
+  const tail  = overlay > 0 && overlay < file.size ? await readSlice(file, overlay, 1048576) : new Uint8Array(0);
+  const hay = [Object.values(ver).join('|'), manifest, bytesToLatin1(rsrcBytes), bytesToLatin1(front), bytesToLatin1(tail)].join('\n');
+
+  let fw = null;
+  if (secs.some(s => s.name === '.wixburn') || hasStr(hay, 'WixBundleManifest')) fw = 'burn';
+  else if (hasStr(hay, 'Inno Setup') || hasStr(hay, 'JR.Inno.Setup')) fw = 'inno';
+  else if (hasStr(hay, 'NullsoftInst') || hasStr(hay, 'Nullsoft.NSIS') || hasStr(hay, 'Nullsoft Install System')) fw = 'nsis';
+  else if (hasStr(hay, 'InstallShield')) fw = 'installshield';
+  else if (hasStr(hay, 'Advanced Installer')) fw = 'advinst';
+  else if (hasStr(hay, 'Setup Factory')) fw = 'setupfactory';
+  else if (hasStr(hay, 'SquirrelSetup') || (hasStr(hay, 'Squirrel') && hasStr(hay, '.nupkg'))) fw = 'squirrel';
+
+  let icon = null;
+  if (res) { try { icon = await extractExeIcon(res); } catch { } }
+
+  const level = (manifest.match(/requestedExecutionLevel[^>]*level\s*=\s*["']([^"']+)/i) || [])[1] || '';
+  const notes = [];
+  if (!fw) notes.push({ t: 'warn', m: 'Installer framework not recognised — silent switches and uninstall logic will be generated by AI using the metadata below. Review before deploying.' });
+  else if (FRAMEWORKS[fw].note) notes.push({ t: 'warn', m: FRAMEWORKS[fw].note });
+  if (machine === 0x14C) notes.push({ t: 'info', m: 'The installer stub is 32-bit — normal for most setup.exe files and says nothing about the app itself. Architecture left at your selection.' });
+
+  return {
+    kind: 'exe', framework: fw,
+    productName: ver.ProductName || ver.FileDescription || '',
+    productVersion: (ver.ProductVersion || ver.FixedProductVersion || ver.FileVersion || '').replace(/,\s*/g, '.'),
+    manufacturer: ver.CompanyName || '',
+    description: ver.FileDescription || '', machine, level, icon, notes,
+  };
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Installer UI
+// ═════════════════════════════════════════════════════════════════════════
+function handleInstallerPick(input) { const f = input.files[0]; input.value = ''; if (f) loadInstaller(f); }
+
+(function wireDropZone() {
+  const dz = () => document.getElementById('dropZone');
+  window.addEventListener('DOMContentLoaded', () => {
+    const z = dz();
+    ['dragenter', 'dragover'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.add('drag'); }));
+    ['dragleave', 'drop'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.remove('drag'); }));
+    z.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) loadInstaller(f); });
+  });
+})();
+
+async function loadInstaller(file) {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (!['msi', 'exe'].includes(ext)) { showError('Only .msi or .exe installers are supported.'); return; }
+  if (file.size >= 4000000000) { showError('That installer is over 4 GB — too large to bundle into a ZIP here.'); return; }
+  hideError();
+  resetOutput();
+  installerBlob = file; installerMeta = null;
+  document.getElementById('fileInfo').style.display = 'block';
+  document.getElementById('fiName').textContent = file.name;
+  document.getElementById('fiSize').textContent = fmtSize(file.size);
+  setMode('Reading…', 'ai');
+  document.getElementById('fiGrid').innerHTML = '';
+  document.getElementById('fiNotes').innerHTML = '';
+  try {
+    installerMeta = ext === 'msi' ? await parseMsi(file) : await parseExe(file);
+  } catch (err) {
+    installerMeta = { kind: ext, framework: ext === 'msi' ? 'msi' : null, productName: '', productVersion: '', manufacturer: '',
+      notes: [{ t: 'warn', m: 'Could not read installer metadata (' + err.message + '). Fill in the fields manually; AI will be used for unknown EXEs.' }] };
+  }
+  installerMeta.fileName = file.name; installerMeta.size = file.size;
+  applyInstallerMeta(installerMeta);
+  renderFileInfo(installerMeta);
+}
+
+function resetOutput() {
+  lastBuild = null;
+  document.getElementById('outputSection').classList.remove('visible');
+  document.getElementById('zipBar').style.display = 'none';
+  document.getElementById('zipBtn').textContent = '⬇ Download Package ZIP';
+}
+
+function clearInstaller() {
+  resetOutput();
+  installerBlob = null; installerMeta = null;
+  document.getElementById('fileInfo').style.display = 'none';
+  document.getElementById('researchRow').style.display = 'flex';
+  if (iconIsAuto) clearIcon();
+}
+
+function setMode(text, cls) {
+  const el = document.getElementById('fiMode');
+  el.textContent = text; el.className = 'fi-mode fi-mode--' + cls;
+}
+
+function applyInstallerMeta(m) {
+  const set = (id, v) => { if (v) document.getElementById(id).value = v; };
+  const fw = m.framework ? FRAMEWORKS[m.framework] : null;
+  const name = (m.productName || m.fileName.replace(/\.(msi|exe)$/i, '')).trim();
+
+  document.getElementById('appName').value = name;
+  document.getElementById('appVersion').value = m.productVersion || '';
+  set('appPublisher', m.manufacturer);
+  setInstallerType(document.getElementById('type-' + m.kind), m.kind);
+  document.getElementById('installerFile').value = m.fileName;
+  document.getElementById('silentFlags').value = fw ? fw.install : '';
+  document.getElementById('researchRow').style.display = 'none';
+
+  if (m.framework === 'squirrel') document.getElementById('installScope').value = 'user';
+  else document.getElementById('installScope').value = 'device';
+
+  if (m.kind === 'msi') {
+    if (m.platform === 'x64') document.getElementById('arch').value = 'x64';
+    else if (m.platform === 'Intel') document.getElementById('arch').value = 'both';
+  }
+
+  const method = document.getElementById('detectMethod');
+  if (m.kind === 'msi' && m.productCode) {
+    method.value = 'msi'; updateDetectFields();
+    document.getElementById('detect1').value = m.productCode;
+    document.getElementById('detect2').value = m.productVersion || '';
+  } else {
+    method.value = 'uninstall'; updateDetectFields();
+    document.getElementById('detect1').value = name ? name.replace(/\s*\(?(x64|x86|64-bit|32-bit)\)?$/i, '') + '*' : '';
+    document.getElementById('detect2').value = m.productVersion || '';
+  }
+
+  if (m.icon && (!iconData || iconIsAuto)) {
+    iconData = m.icon; iconFileName = 'icon.png'; iconIsAuto = true;
+    document.getElementById('iconBox').innerHTML = '<img src="' + iconData + '" alt="icon"/>';
+    document.getElementById('iconFileName').textContent = 'icon.png (extracted from installer)';
+    document.getElementById('iconClearBtn').style.display = 'inline-flex';
+  }
+}
+
+function renderFileInfo(m) {
+  const fw = m.framework ? FRAMEWORKS[m.framework] : null;
+  if (!fw) setMode('AI fallback', 'ai');
+  else if (fw.confident) setMode('Template ✓', 'tpl');
+  else setMode('Template — review', 'rev');
+
+  const items = [
+    ['Type', m.kind.toUpperCase()],
+    ['Framework', fw ? fw.label : 'Unknown'],
+    ['Product', m.productName || '—'],
+    ['Version', m.productVersion || '—'],
+    ['Publisher', m.manufacturer || '—'],
+  ];
+  if (m.kind === 'msi') {
+    items.push(['Product Code', m.productCode || '—'], ['Upgrade Code', m.upgradeCode || '—'], ['Platform', m.platform || '—'], ['ALLUSERS', m.allUsers || '(unset)']);
+  } else {
+    items.push(['Silent switch', fw ? fw.install : '—'], ['Stub arch', m.machine === 0x8664 ? 'x64' : m.machine === 0xAA64 ? 'ARM64' : m.machine === 0x14C ? 'x86' : '—'], ['Elevation', m.level || '—']);
+  }
+  document.getElementById('fiGrid').innerHTML = items.map(([k, v]) =>
+    `<div class="fi-item"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join('');
+  document.getElementById('fiNotes').innerHTML = (m.notes || []).map(n =>
+    `<div class="fi-note ${n.t === 'info' ? 'info' : ''}">${n.t === 'info' ? 'ℹ' : '⚠'} ${esc(n.m)}</div>`).join('');
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+// ═════════════════════════════════════════════════════════════════════════
+// AI call (fallback path)
+// ═════════════════════════════════════════════════════════════════════════
+async function callAI(prompt, maxTokens) {
+  const r = await KitAI.chat({ prompt, maxTokens: maxTokens || 4000, reason: 'The Win32 App Builder uses AI to research apps and handle unrecognised installers.' });
+  lastAiLabel = r.providerLabel + ' \u00b7 ' + r.model + (r.usedFallback ? ', fallback' : '');
+  return { text: r.text, truncated: !!r.truncated };
+}
+function extractTag(r, tag) {
+  const open = '##' + tag + '##', close = '##END_' + tag + '##';
+  const si = r.text.indexOf(open), ei = r.text.indexOf(close);
+  if (si !== -1 && ei !== -1) return stripFences(r.text.slice(si + open.length, ei).trim());
+  if (si !== -1 && r.truncated) return stripFences(r.text.slice(si + open.length).trim()) + '\n\n# !! OUTPUT WAS CUT OFF — click Build again';
+  return '# Could not generate this section — click Build again.';
+}
+function stripFences(s) { return s.replace(/^```[a-z]*\s*\n/i, '').replace(/\n```\s*$/, ''); }
+
+// ── Icon upload ───────────────────────────────────────────────────────────
+function handleIconUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    iconData = e.target.result; iconFileName = file.name; iconIsAuto = false;
+    document.getElementById('iconBox').innerHTML = '<img src="' + iconData + '" alt="icon"/>';
+    document.getElementById('iconFileName').textContent = file.name;
+    document.getElementById('iconClearBtn').style.display = 'inline-flex';
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+function clearIcon() {
+  iconData = null; iconFileName = null; iconIsAuto = false;
+  document.getElementById('iconBox').innerHTML = '<div class="icon-placeholder">Click to<br>add icon</div>';
+  document.getElementById('iconFileName').textContent = '';
+  document.getElementById('iconClearBtn').style.display = 'none';
+}
+
+// ── Installer type ────────────────────────────────────────────────────────
+function setInstallerType(el, type) {
+  installerType = type;
+  document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const fields = document.getElementById('installerFields');
+  if (type === 'script') {
+    fields.style.display = 'none';
+  } else {
+    fields.style.display = 'grid';
+    document.getElementById('installerFile').placeholder   = type === 'msi' ? 'e.g. setup.msi' : 'e.g. setup.exe';
+    document.getElementById('silentFlagLabel').textContent = type === 'msi' ? 'msiexec Properties / Flags' : 'Silent Install Flags';
+    document.getElementById('silentFlags').placeholder     = type === 'msi' ? '/qn /norestart ALLUSERS=1' : '/silent /install';
+  }
+}
+
+// ── Detection fields ──────────────────────────────────────────────────────
+function updateDetectFields() {
+  const method = document.getElementById('detectMethod').value;
+  const cfg = {
+    uninstall: { l1: 'DisplayName match (wildcards ok)', l2: 'Minimum version', p1: 'e.g. Google Chrome*', p2: 'e.g. 124.0.6367.60', show2: true },
+    msi:       { l1: 'MSI Product Code', l2: 'Minimum version', p1: '{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}', p2: 'e.g. 1.2.3', show2: true },
+    registry:  { l1: 'Registry Path', l2: 'Value Name', p1: 'HKLM:\\SOFTWARE\\...', p2: 'DisplayVersion', show2: true },
+    file:      { l1: 'File/Folder Path', l2: '', p1: 'C:\\Program Files\\...', p2: '', show2: false },
+    version:   { l1: 'File Path', l2: 'Minimum File Version', p1: 'C:\\Program Files\\...\\app.exe', p2: '1.0.0.0', show2: true },
+    script:    { l1: 'Detection Hint', l2: '', p1: 'Describe what to detect...', p2: '', show2: false },
+  };
+  const c = cfg[method];
+  document.getElementById('detect1Label').textContent   = c.l1;
+  document.getElementById('detect1').placeholder        = c.p1;
+  document.getElementById('detectField2').style.display = c.show2 ? '' : 'none';
+  if (c.show2) { document.getElementById('detect2Label').textContent = c.l2; document.getElementById('detect2').placeholder = c.p2; }
+}
+
+// ── Research (no-file mode) ───────────────────────────────────────────────
+async function researchApp() {
+  const appName = document.getElementById('appName').value.trim();
+  if (!appName) { showError('Enter an application name first.'); return; }
+  const btn = document.getElementById('researchBtn'), spinner = document.getElementById('researchSpinner'), status = document.getElementById('researchStatus');
+  btn.disabled = true; spinner.style.display = 'inline-block';
+  status.textContent = '🔍 Researching ' + appName + '...';
+  status.style.color = 'var(--brand-pale)';
+  status.classList.add('visible');
+  hideError();
+
+  const prompt = `You are an expert Intune Win32 app packaging engineer. Research the following application and return its packaging details.
+Application: ${appName}
+Return ONLY this exact format with no extra text:
+##PUBLISHER##
+Publisher name
+##END_PUBLISHER##
+##VERSION##
+Latest stable version number
+##END_VERSION##
+##INSTALLER_TYPE##
+exe or msi
+##END_INSTALLER_TYPE##
+##INSTALLER_FILE##
+Typical installer filename
+##END_INSTALLER_FILE##
+##SILENT_FLAGS##
+Silent install command line flags
+##END_SILENT_FLAGS##
+##DISPLAY_NAME##
+The DisplayName it writes under the Uninstall registry key, with a trailing * wildcard
+##END_DISPLAY_NAME##`;
+
+  try {
+    const r = await callAI(prompt, 1500);
+    const ex = (t) => { const v = extractTag(r, t); return v.startsWith('# ') ? '' : v; };
+    const publisher = ex('PUBLISHER'), version = ex('VERSION'), instType = ex('INSTALLER_TYPE').toLowerCase(),
+          instFile = ex('INSTALLER_FILE'), silentFlags = ex('SILENT_FLAGS'), displayName = ex('DISPLAY_NAME');
+    if (instType === 'msi') setInstallerType(document.getElementById('type-msi'), 'msi');
+    else setInstallerType(document.getElementById('type-exe'), 'exe');
+    if (publisher)   document.getElementById('appPublisher').value  = publisher;
+    if (version)     document.getElementById('appVersion').value    = version;
+    if (instFile)    document.getElementById('installerFile').value = instFile;
+    if (silentFlags) document.getElementById('silentFlags').value   = silentFlags;
+    document.getElementById('detectMethod').value = 'uninstall'; updateDetectFields();
+    if (displayName) document.getElementById('detect1').value = displayName;
+    if (version)     document.getElementById('detect2').value = version;
+    status.textContent = '✓ Auto-filled — review and adjust as needed. Dropping the real installer above gives exact values.';
+    status.style.color = 'var(--color-success)';
+  } catch (err) {
+    status.textContent = '⚠ Research failed: ' + err.message;
+    status.style.color = 'var(--color-error)';
+  } finally {
+    btn.disabled = false; spinner.style.display = 'none';
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// PowerShell templates (deterministic path)
+//   String.raw keeps backslashes literal; never put a backtick in these.
+// ═════════════════════════════════════════════════════════════════════════
+const psq = (s) => "'" + String(s ?? '').replace(/'/g, "''") + "'";
+
+const PS_UNINSTALL_PATHS = String.raw`@(
+    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+    'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
+    'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*'
+)`;
+
+const PS_TO_VERSION = String.raw`function ConvertTo-Version([string]$Value) {
+    if ($Value -match '(\d+(\.\d+){0,3})') {
+        $s = $Matches[1]
+        if ($s -notmatch '\.') { $s += '.0' }
+        try { return [version]$s } catch { return $null }
+    }
+    return $null
+}`;
+
+function psHeader(kind, c, fwLabel) {
+  const logDir = c.scope === 'user' ? ('$env:LOCALAPPDATA\\' + T.logFolder + '\\IntuneLogs') : String.raw`$env:WINDIR\Logs\IntuneApps`;
+  return String.raw`<#
+.SYNOPSIS
+    ${kind} script - ${c.appName}${c.version ? ' ' + c.version : ''}
+.NOTES
+    Publisher : ${c.publisher || 'N/A'}
+    Installer : ${c.instFile || 'n/a'} (${fwLabel})
+    Generated : ${c.date} - ${T.districtShort} ${T.portalName}, Win32 App Builder v2
+    Author    : ${T.author}
+#>
+$ErrorActionPreference = 'Stop'
+
+# The Intune agent can launch 32-bit PowerShell; relaunch 64-bit so registry and Program Files resolve correctly
+if ([Environment]::Is64BitOperatingSystem -and -not [Environment]::Is64BitProcess) {
+    $ps64 = Join-Path $env:WINDIR 'sysnative\WindowsPowerShell\v1.0\powershell.exe'
+    if (Test-Path $ps64) {
+        & $ps64 -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath
+        exit $LASTEXITCODE
+    }
+}
+
+$LogDir  = "${logDir}"
+$LogFile = Join-Path $LogDir '${c.slug}-${kind.toLowerCase()}.log'
+New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+function Write-Log([string]$Message) {
+    $line = '{0}  {1}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Message
+    Add-Content -Path $LogFile -Value $line
+    Write-Output $line
+}
+
+# 0 success | 1707 success | 3010 soft reboot | 1641 hard reboot
+$SuccessCodes = @(0, 1707, 3010, 1641)
+`;
+}
+
+function tplInstall(c, fwKey) {
+  const fw = FRAMEWORKS[fwKey], isMsi = fwKey === 'msi', ext = isMsi ? 'msi' : 'exe';
+  const findByName = c.instFile
+    ? String.raw`$installer = Get-Item -LiteralPath (Join-Path $PSScriptRoot ${psq(c.instFile)}) -ErrorAction SilentlyContinue`
+    : '$installer = $null';
+  const find = String.raw`    ${findByName}
+    if (-not $installer) {
+        # Version-agnostic fallback: newest .${ext} in the package
+        $installer = Get-ChildItem -Path $PSScriptRoot -Filter '*.${ext}' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    }
+    if (-not $installer) { Write-Log 'ERROR: no .${ext} installer found next to install.ps1'; exit 1 }
+`;
+  const run = isMsi ? String.raw`
+    $msiLog  = Join-Path $LogDir '${c.slug}-msiexec.log'
+    $msiArgs = '/i "{0}" {1} /l*v "{2}"' -f $installer.FullName, ${psq(c.flags)}, $msiLog
+    Write-Log "Installing $($installer.Name): msiexec.exe $msiArgs"
+    $proc = Start-Process -FilePath 'msiexec.exe' -ArgumentList $msiArgs -Wait -PassThru
+` : String.raw`
+    $argList = ${psq(c.flags)}
+    Write-Log "Installing $($installer.Name) $argList"
+    if ($argList) { $proc = Start-Process -FilePath $installer.FullName -ArgumentList $argList -Wait -PassThru }
+    else          { $proc = Start-Process -FilePath $installer.FullName -Wait -PassThru }
+`;
+  return psHeader('Install', c, fw.label) + String.raw`
+try {
+${find}${run}
+    $code = $proc.ExitCode
+    if ($SuccessCodes -contains $code) { Write-Log "Install complete (exit $code)"; exit $code }
+    Write-Log "ERROR: installer returned exit code $code${isMsi ? ' - see $msiLog' : ''}"
+    exit $code
+}
+catch {
+    Write-Log "ERROR: $($_.Exception.Message)"
+    exit 1
+}
+`;
+}
+
+function tplUninstall(c, fwKey, pattern, productCode) {
+  const fw = FRAMEWORKS[fwKey];
+  const lookup = String.raw`
+$NamePattern = ${psq(pattern)}
+function Get-UninstallEntries {
+    Get-ItemProperty -Path ${PS_UNINSTALL_PATHS.replace(/\n/g, '\n    ')} -ErrorAction SilentlyContinue |
+        Where-Object { $_.DisplayName -like $NamePattern }
+}
+`;
+  if (fwKey === 'msi') {
+    return psHeader('Uninstall', c, fw.label) + lookup + String.raw`$ProductCode = ${psq(productCode)}
+
+try {
+    # Prefer this package's exact ProductCode; fall back to any MSI entry matching the name
+    $targets = @()
+    foreach ($root in 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
+                      'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall') {
+        if ($ProductCode -and (Test-Path (Join-Path $root $ProductCode))) { $targets = @($ProductCode); break }
+    }
+    if (-not $targets) {
+        $targets = @(Get-UninstallEntries |
+            Where-Object { $_.PSChildName -match '^\{[0-9A-Fa-f\-]{36}\}$' } |
+            Select-Object -ExpandProperty PSChildName -Unique)
+    }
+    if (-not $targets) { Write-Log "Not installed (no match for $ProductCode / '$NamePattern') - nothing to do"; exit 0 }
+
+    $final = 0
+    foreach ($guid in $targets) {
+        $msiLog = Join-Path $LogDir ('${c.slug}-uninstall-{0}.log' -f $guid.Trim('{}'))
+        Write-Log "Removing $guid"
+        $proc = Start-Process -FilePath 'msiexec.exe' -ArgumentList ('/x {0} /qn /norestart /l*v "{1}"' -f $guid, $msiLog) -Wait -PassThru
+        Write-Log "msiexec /x $guid returned $($proc.ExitCode)"
+        # 1605 = product not installed (already gone)
+        if (-not ($SuccessCodes -contains $proc.ExitCode) -and $proc.ExitCode -ne 1605) { $final = $proc.ExitCode }
+    }
+    exit $final
+}
+catch {
+    Write-Log "ERROR: $($_.Exception.Message)"
+    exit 1
+}
+`;
+  }
+
+  const burnFix = fw.burn ? String.raw`
+            if ($rest -notmatch '/uninstall') { $rest = ('/uninstall ' + $rest).Trim() }` : '';
+  const nsisArg = fw.nsis ? String.raw`
+            # _?= makes the NSIS uninstaller run in place and wait (otherwise it returns immediately)
+            $rest = ($rest + ' _?=' + (Split-Path $exe -Parent)).Trim()` : '';
+  const nsisCleanup = fw.nsis ? String.raw`
+        if (((Split-Path $exe -Leaf) -ine 'msiexec.exe') -and ($SuccessCodes -contains $p.ExitCode)) {
+            # With _?= the uninstaller can't delete itself - tidy up
+            Remove-Item -LiteralPath $exe -Force -ErrorAction SilentlyContinue
+            $dir = Split-Path $exe -Parent
+            if ((Test-Path $dir) -and -not (Get-ChildItem -LiteralPath $dir -Force)) { Remove-Item -LiteralPath $dir -Force }
+        }` : '';
+
+  return psHeader('Uninstall', c, fw.label) + lookup + String.raw`$SilentFlags = ${psq(fw.uninstFlags || '')}
+$UseQuietString = $${fw.useQuiet ? 'true' : 'false'}
+
+try {
+    $entries = @(Get-UninstallEntries)
+    if (-not $entries) { Write-Log "No uninstall entry matches '$NamePattern' - nothing to do"; exit 0 }
+
+    $final = 0
+    foreach ($e in $entries) {
+        Write-Log "Removing: $($e.DisplayName) $($e.DisplayVersion)"
+        $isQuiet = $UseQuietString -and $e.QuietUninstallString
+        $cmd = if ($isQuiet) { $e.QuietUninstallString } else { $e.UninstallString }
+        if (-not $cmd) { Write-Log 'No UninstallString - skipping'; continue }
+
+        if ($cmd -match '^\s*"?([^"]+?\.exe)"?\s*(.*)$') { $exe = $Matches[1]; $rest = $Matches[2].Trim() }
+        else { Write-Log "Could not parse uninstall command: $cmd"; $final = 1; continue }
+
+        if ((Split-Path $exe -Leaf) -ieq 'msiexec.exe') {
+            if ($rest -match '(\{[0-9A-Fa-f\-]{36}\})') { $rest = '/x {0} /qn /norestart' -f $Matches[1] }
+        }
+        elseif (-not $isQuiet) {
+            $rest = ($rest + ' ' + $SilentFlags).Trim()${burnFix}${nsisArg}
+        }
+
+        Write-Log "Running: $exe $rest"
+        if ($rest) { $p = Start-Process -FilePath $exe -ArgumentList $rest -Wait -PassThru }
+        else       { $p = Start-Process -FilePath $exe -Wait -PassThru }
+        Write-Log "Exit code: $($p.ExitCode)"
+        if (-not ($SuccessCodes -contains $p.ExitCode)) { $final = $p.ExitCode }${nsisCleanup}
+    }
+    exit $final
+}
+catch {
+    Write-Log "ERROR: $($_.Exception.Message)"
+    exit 1
+}
+`;
+}
+
+function tplDetect(c) {
+  const head = String.raw`<#
+.SYNOPSIS
+    Intune detection - ${c.appName}${c.version ? ' ' + c.version : ''}
+.NOTES
+    Exit 0 + STDOUT = installed. Exit 1 / no output = not installed.
+    Intune setting: "Run script as 32-bit process on 64-bit clients" = No
+    Generated : ${c.date} - ${T.districtShort} ${T.portalName}, Win32 App Builder v2
+#>
+`;
+  switch (c.method) {
+    case 'uninstall': return head + String.raw`$NamePattern = ${psq(c.detect1)}
+$MinVersion  = ${psq(c.detect2)}
+
+${PS_TO_VERSION}
+
+$hits = Get-ItemProperty -Path ${PS_UNINSTALL_PATHS} -ErrorAction SilentlyContinue |
+    Where-Object { $_.DisplayName -like $NamePattern }
+
+foreach ($h in $hits) {
+    if (-not $MinVersion) { Write-Output "Detected: $($h.DisplayName)"; exit 0 }
+    $have = ConvertTo-Version $h.DisplayVersion
+    $want = ConvertTo-Version $MinVersion
+    if ($have -and $want -and $have -ge $want) { Write-Output "Detected: $($h.DisplayName) $($h.DisplayVersion)"; exit 0 }
+}
+exit 1
+`;
+    case 'msi': return head + String.raw`$ProductCode = ${psq(c.detect1)}
+$MinVersion  = ${psq(c.detect2)}
+
+${PS_TO_VERSION}
+
+foreach ($root in 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
+                  'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall',
+                  'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall') {
+    $key = Join-Path $root $ProductCode
+    if (-not (Test-Path $key)) { continue }
+    $entry = Get-ItemProperty -Path $key -ErrorAction SilentlyContinue
+    if (-not $MinVersion) { Write-Output "Detected: $ProductCode"; exit 0 }
+    $have = ConvertTo-Version $entry.DisplayVersion
+    $want = ConvertTo-Version $MinVersion
+    if ($have -and $want -and $have -ge $want) { Write-Output "Detected: $ProductCode $($entry.DisplayVersion)"; exit 0 }
+}
+exit 1
+`;
+    case 'registry': return head + String.raw`$Path      = ${psq(c.detect1)}
+$ValueName = ${psq(c.detect2)}
+
+$item = Get-ItemProperty -Path $Path -ErrorAction SilentlyContinue
+if ($item) {
+    if (-not $ValueName) { Write-Output "Detected: $Path"; exit 0 }
+    $val = $item.$ValueName
+    if ($null -ne $val -and "$val" -ne '') { Write-Output "Detected: $Path\$ValueName = $val"; exit 0 }
+}
+exit 1
+`;
+    case 'file': return head + String.raw`$Path = [Environment]::ExpandEnvironmentVariables(${psq(c.detect1)})
+
+if (Test-Path -LiteralPath $Path) { Write-Output "Detected: $Path"; exit 0 }
+exit 1
+`;
+    case 'version': return head + String.raw`$Path       = [Environment]::ExpandEnvironmentVariables(${psq(c.detect1)})
+$MinVersion = ${psq(c.detect2)}
+
+${PS_TO_VERSION}
+
+if (Test-Path -LiteralPath $Path) {
+    $fv = (Get-Item -LiteralPath $Path).VersionInfo.FileVersion
+    if (-not $MinVersion) { Write-Output "Detected: $Path $fv"; exit 0 }
+    $have = ConvertTo-Version $fv
+    $want = ConvertTo-Version $MinVersion
+    if ($have -and $want -and $have -ge $want) { Write-Output "Detected: $Path $fv"; exit 0 }
+}
+exit 1
+`;
+  }
+  return null;  // 'script' → AI
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Intune settings sheet
+// ═════════════════════════════════════════════════════════════════════════
+const RESTART_TEXT = {
+  suppress: 'No specific action',
+  allow: 'App install may force a device restart',
+  force: 'Intune will force a mandatory device restart',
+};
+const ARCH_TEXT = { x64: '64-bit', x86: '32-bit', both: '32-bit and 64-bit' };
+const OS_TEXT = { W10_1903: 'Windows 10 1903', W10_2004: 'Windows 10 2004', W10_21H2: 'Windows 10 21H2', W11_21H2: 'Windows 11 21H2', W11_22H2: 'Windows 11 22H2' };
+
+function buildSettings(c, meta) {
+  const ps = 'powershell.exe -ExecutionPolicy Bypass -NoProfile -File .\\';
+  const setup = c.instFile || 'install.ps1';
+  const L = [];
+  L.push(T.districtShort + ' Win32 App - Intune settings sheet', '='.repeat(60),
+    `Generated ${c.date} by Tech Tools Portal - Win32 App Builder v2`, '');
+  L.push('PACKAGE (Build-IntuneWin.cmd in the ZIP does this for you)',
+    `  IntuneWinAppUtil.exe -c ".\\Source" -s "${setup}" -o ".\\Output" -q`, '');
+  L.push('Intune admin center > Apps > Windows > + Create > Windows app (Win32)', '');
+  L.push('APP INFORMATION',
+    `  Name ............... ${c.appName}${c.version ? ' ' + c.version : ''}`,
+    `  Description ........ ${c.appName}${c.publisher ? ' by ' + c.publisher.replace(/\.$/, '') : ''}. Packaged by ${T.publisher}.`,
+    `  Publisher .......... ${c.publisher || '[publisher]'}`,
+    `  App version ........ ${c.version || '[version]'}`,
+    `  Logo ............... ${iconData ? 'icon.' + iconExt() + ' in the ZIP' : '(none)'}`);
+  if (c.notes) L.push(`  Notes .............. ${c.notes}`);
+  L.push('');
+  L.push('PROGRAM',
+    `  Install command .... ${ps}install.ps1`,
+    `  Uninstall command .. ${ps}uninstall.ps1`,
+    `  Installation time .. ${c.installTime || 60} minutes`,
+    `  Allow available uninstall: Yes`,
+    `  Install behavior ... ${c.scope === 'device' ? 'System' : 'User'}`,
+    `  Device restart ..... ${RESTART_TEXT[c.restart]}`,
+    `  Return codes ....... 0 Success | 1707 Success | 3010 Soft reboot | 1641 Hard reboot | 1618 Retry`, '');
+  L.push('REQUIREMENTS',
+    `  OS architecture .... ${ARCH_TEXT[c.arch]}`,
+    `  Minimum OS ......... ${OS_TEXT[c.minOS]}`, '');
+  L.push('DETECTION RULES',
+    '  Rules format ....... Use a custom detection script',
+    '  Script file ........ detect.ps1',
+    '  Run as 32-bit ...... No',
+    '  Enforce signature .. No');
+  if (meta && meta.kind === 'msi' && meta.productCode) {
+    L.push('', '  Alternative (no script): Manually configure > Rule type: MSI',
+      `    Product code ..... ${meta.productCode}`,
+      `    Version check .... Yes - Greater than or equal to ${meta.productVersion || c.version}`);
+  }
+  L.push('');
+  L.push('SUPERSEDENCE (when this replaces an older version)',
+    '  Win32 app content is immutable - always create a NEW app object for a new version.',
+    '  Add the old app under Supersedence (Uninstall previous version: Yes if the vendor',
+    '  does not upgrade in place). Do NOT delete the old app; supersedence references it.',
+    '  Detection above is version-specific, so devices on the old version report "not installed".');
+  if (meta && meta.upgradeCode) L.push('', `MSI UpgradeCode: ${meta.upgradeCode}`);
+  return L.join('\n');
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// AI generation (fallback) — split into two calls so nothing gets cut off
+// ═════════════════════════════════════════════════════════════════════════
+function aiContext(c) {
+  let s = `Application: ${c.appName}
+Version: ${c.version || 'latest'} | Publisher: ${c.publisher || 'unknown'} | Installer: ${installerType.toUpperCase()}
+Installer file: ${c.instFile || 'setup.exe'} | Silent flags: ${c.flags || 'to be determined'}
+Install scope: ${c.scope} (${c.scope === 'device' ? 'SYSTEM' : 'user'} context)
+Detection: ${c.method} - ${c.detect1}${c.detect2 ? ' / ' + c.detect2 : ''}
+Min OS: ${c.minOS} | Arch: ${c.arch} | Restart: ${c.restart} | Max time: ${c.installTime} min
+Notes: ${c.notes || 'none'}`;
+  if (installerMeta) {
+    s += `\nMetadata read from the actual installer file: ProductName="${installerMeta.productName}", ProductVersion="${installerMeta.productVersion}", Company="${installerMeta.manufacturer}", Description="${installerMeta.description || ''}", installer framework not recognised (not Inno/NSIS/WiX Burn/InstallShield). Use this metadata.`;
+  }
+  return s;
+}
+
+async function aiScripts(c) {
+  const ctx = aiContext(c);
+  const rules = `Rules for every script:
+- PowerShell 5.1. Start with a comment block (App: ${c.appName}, Author: ${T.author}, Date: ${c.date}).
+- If running as 32-bit on 64-bit Windows, relaunch via $env:WINDIR\\sysnative\\WindowsPowerShell\\v1.0\\powershell.exe.
+- try/catch, log to ${c.scope === 'device' ? 'C:\\Windows\\Logs\\IntuneApps' : '$env:LOCALAPPDATA\\' + T.logFolder + '\\IntuneLogs'}\\${c.slug}-<install|uninstall>.log
+- Exit with the installer's exit code when it is 0, 1707, 3010 or 1641; otherwise log it and exit with it. Exit 1 on exceptions.
+- No markdown fences. Return only the tagged sections.`;
+
+  const pA = `You are an expert Microsoft Intune Win32 app packaging engineer for ${T.districtName} (${T.districtShort}), a K-12 school district.
+${ctx}
+
+${rules}
+
+##INSTALL##
+Complete install.ps1.
+${installerType === 'script'
+    ? 'Script-based logic, no separate installer file.'
+    : `Look for the installer by name first (Join-Path $PSScriptRoot '${c.instFile || 'setup.' + installerType}'), falling back to the newest *.${installerType} in $PSScriptRoot. If none found, log and exit 1.
+${installerType === 'msi' ? 'Run msiexec.exe /i with /qn /norestart and a verbose /l*v log.' : 'Run Start-Process -Wait -PassThru with the silent flags.'}`}
+##END_INSTALL##
+
+##UNINSTALL##
+Complete uninstall.ps1 with the same logging and exit-code handling. Do not hardcode version numbers.
+${installerType === 'msi'
+    ? 'Search HKLM Uninstall (both views) for DisplayName matching the app; use the GUID PSChildName with msiexec /x /qn /norestart.'
+    : 'Search HKLM (both views) and HKCU Uninstall keys for the DisplayName; prefer QuietUninstallString, else UninstallString plus the correct silent switch for this installer. If UninstallString is MsiExec, convert to /x {GUID} /qn /norestart. Exit 0 if nothing is installed.'}
+##END_UNINSTALL##`;
+
+  const needDetect = c.method === 'script';
+  const pB = `You are an expert Microsoft Intune Win32 app packaging engineer for ${T.districtName}.
+${ctx}
+
+No markdown fences. Return only the tagged sections.
+${needDetect ? `
+##DETECT##
+Intune custom detection script. Detected: Write-Output a status line and exit 0. Not detected: exit 1 with NO output.
+What to detect: ${c.detect1}
+##END_DETECT##
+` : ''}
+##DOWNLOAD_URL##
+Official direct download URL for the enterprise/IT installer (MSI preferred). Return only the URL.
+##END_DOWNLOAD_URL##`;
+
+  const [a, b] = await Promise.all([callAI(pA, 8000), callAI(pB, needDetect ? 3000 : 400)]);
+  return {
+    install: extractTag(a, 'INSTALL'),
+    uninstall: extractTag(a, 'UNINSTALL'),
+    detect: needDetect ? extractTag(b, 'DETECT') : null,
+    downloadUrl: (() => { const u = extractTag(b, 'DOWNLOAD_URL'); return /^https?:\/\//.test(u) ? u.split(/\s/)[0] : ''; })(),
+  };
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Generate
+// ═════════════════════════════════════════════════════════════════════════
+function gatherConfig() {
+  const v = (id) => document.getElementById(id).value.trim();
+  const c = {
+    appName: v('appName'), version: v('appVersion'), publisher: v('appPublisher'), scope: v('installScope'),
+    instFile: installerType === 'script' ? '' : v('installerFile'), flags: v('silentFlags'),
+    method: v('detectMethod'), detect1: v('detect1'), detect2: v('detect2'),
+    minOS: v('minOS'), arch: v('arch'), restart: v('restart'), installTime: v('installTime'), notes: v('appNotes'),
+    date: new Date().toLocaleDateString('en-US'),
+  };
+  c.slug = (c.appName + (c.version ? '-' + c.version : '')).replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-_.]/g, '') || 'App';
+  return c;
+}
+
+async function generate() {
+  const c = gatherConfig();
+  if (!c.appName) { showError('Please enter the application name.'); return; }
+  if (c.method !== 'script' && !c.detect1) { showError('Fill in the detection field (step 🎯) — it decides how Intune knows the app is installed.'); return; }
+  hideError(); resetOutput(); setLoading(true); showProgress();
+
+  const fwKey = installerMeta && installerMeta.framework && FRAMEWORKS[installerMeta.framework] ? installerMeta.framework : null;
+  const useTemplate = !!fwKey && installerType !== 'script';
+  document.getElementById('step2Text').textContent = useTemplate
+    ? `Building ${FRAMEWORKS[fwKey].label} install & uninstall scripts from templates...`
+    : 'Generating install & uninstall scripts with AI...';
+
+  try {
+    setStep(1, 'active'); await sleep(150);
+    setStep(1, 'done'); setStep(2, 'active');
+
+    let install, uninstall, detect, downloadUrl = '';
+    if (useTemplate) {
+      const pattern = c.method === 'uninstall' && c.detect1 ? c.detect1 : (c.appName + '*');
+      const productCode = installerMeta.productCode || (c.method === 'msi' ? c.detect1 : '');
+      install = tplInstall(c, fwKey);
+      uninstall = tplUninstall(c, fwKey, pattern, productCode);
+      detect = tplDetect(c);
+      if (detect === null) detect = (await aiScripts(c)).detect;
+    } else {
+      const r = await aiScripts(c);
+      install = r.install; uninstall = r.uninstall; downloadUrl = r.downloadUrl;
+      detect = c.method === 'script' ? r.detect : tplDetect(c);
+    }
+    setStep(2, 'done'); setStep(3, 'active'); await sleep(120);
+
+    const settings = buildSettings(c, installerMeta);
+    document.getElementById('code-install').textContent   = install;
+    document.getElementById('code-uninstall').textContent = uninstall;
+    document.getElementById('code-detect').textContent    = detect;
+    document.getElementById('code-command').textContent   = settings;
+    setStep(3, 'done'); setStep(4, 'active'); await sleep(120);
+
+    const builtFrom = useTemplate ? 'Template — ' + FRAMEWORKS[fwKey].label : 'AI (' + lastAiLabel + ')';
+    const rows = [
+      { label: 'App Name', value: c.appName },
+      { label: 'Version', value: c.version || 'Latest' },
+      { label: 'Publisher', value: c.publisher || '—' },
+      { label: 'Installer', value: c.instFile || installerType.toUpperCase() },
+      { label: 'Install Scope', value: c.scope === 'device' ? 'System (Device)' : 'User' },
+      { label: 'Detection', value: document.getElementById('detectMethod').selectedOptions[0].textContent },
+      { label: 'Min OS', value: OS_TEXT[c.minOS] },
+      { label: 'Architecture', value: ARCH_TEXT[c.arch] },
+      { label: 'Built From', value: builtFrom },
+    ];
+    if (installerMeta && installerMeta.productCode) rows.push({ label: 'Product Code', value: installerMeta.productCode });
+    document.getElementById('summaryGrid').innerHTML = rows.map(i =>
+      `<div class="summary-item"><div class="s-label">${esc(i.label)}</div><div class="s-value">${esc(i.value)}</div></div>`).join('');
+    setStep(4, 'done'); setStep(5, 'active'); await sleep(120);
+
+    const callout = document.getElementById('packagerCallout');
+    let packager;
+    if (installerBlob) {
+      packager = buildZipPackagerScript(c);
+      document.getElementById('packagerName').textContent = 'Build-IntuneWin.ps1 (in the ZIP)';
+      callout.innerHTML = '<strong>Included in the ZIP.</strong> Extract the ZIP and double-click <code>Build-IntuneWin.cmd</code> — it unblocks the files, finds or downloads <code>IntuneWinAppUtil.exe</code>, and writes the <strong>.intunewin</strong> to <code>.\\Output\\</code>. No admin rights needed.';
+    } else {
+      packager = buildPackagerScript({ ...c, installScript: install, uninstallScript: uninstall, detectScript: detect, downloadUrl });
+      document.getElementById('packagerName').textContent = 'Run-Win32Packager.ps1';
+      callout.innerHTML = '<strong>Auto-Packager</strong> — Copy this to the machine where you build packages and run it. It creates <code>C:\\IntuneApps\\' + esc(c.slug) + '</code>, writes the scripts and icon, asks you to drop the installer in, and runs <code>IntuneWinAppUtil.exe</code>. <em>Tip: drop the installer file at the top of this page instead and you get a ready-made ZIP.</em>';
+    }
+    document.getElementById('code-packager').textContent = packager;
+
+    lastBuild = { c, install, uninstall, detect, settings, packager };
+    document.getElementById('zipBar').style.display = installerBlob ? 'flex' : 'none';
+
+    setStep(5, 'done'); await sleep(250); hideProgress();
+    document.getElementById('outputSection').classList.add('visible');
+    document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    hideProgress(); showError('Error: ' + err.message);
+  } finally { setLoading(false); }
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Packager scripts
+// ═════════════════════════════════════════════════════════════════════════
+function scriptToBase64(str) {
+  const bytes = new TextEncoder().encode('\uFEFF' + str); let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function iconExt() {
+  if (!iconData) return 'png';
+  const m = iconData.match(/^data:image\/(png|jpeg|jpg)/i);
+  return m ? (m[1].toLowerCase() === 'png' ? 'png' : 'jpg') : (iconFileName || 'icon.png').split('.').pop().toLowerCase();
+}
+
+// ZIP flavour — paths relative to the extracted folder
+function buildZipPackagerScript(c) {
+  const setup = c.instFile || (installerBlob ? installerBlob.name : 'install.ps1');
+  return String.raw`#Requires -Version 5.1
+<#
+.SYNOPSIS
+    Builds the .intunewin for ${c.appName}${c.version ? ' ' + c.version : ''}
+.NOTES
+    Generated ${c.date} by ${T.districtShort} ${T.portalName} - Win32 App Builder v2
+    Run Build-IntuneWin.cmd (double-click). Admin rights are not required.
+#>
+$ErrorActionPreference = 'Stop'
+
+$Root      = $PSScriptRoot
+$SourceDir = Join-Path $Root 'Source'
+$OutputDir = Join-Path $Root 'Output'
+$SetupFile = ${psq(setup)}
+$ToolsDir  = 'C:\IntuneApps\Tools'
+$UtilUrl   = 'https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe'
+
+Write-Host ''
+Write-Host '  ================================================' -ForegroundColor Cyan
+Write-Host '   ${T.districtShort} Win32 Packager' -ForegroundColor Cyan
+Write-Host ${psq('   ' + c.appName + (c.version ? ' ' + c.version : ''))} -ForegroundColor White
+Write-Host '  ================================================' -ForegroundColor Cyan
+Write-Host ''
+
+try {
+    # Files extracted from a downloaded ZIP carry Mark-of-the-Web - clear it
+    Get-ChildItem -Path $Root -Recurse -File | Unblock-File
+
+    if (-not (Test-Path -LiteralPath (Join-Path $SourceDir $SetupFile))) {
+        throw "Installer not found: $SourceDir\$SetupFile"
+    }
+
+    $util = @((Join-Path $Root 'IntuneWinAppUtil.exe'), (Join-Path $ToolsDir 'IntuneWinAppUtil.exe'), 'C:\Tools\IntuneWinAppUtil.exe') |
+        Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $util) {
+        Write-Host '  Downloading IntuneWinAppUtil.exe from Microsoft...' -ForegroundColor Yellow
+        New-Item -ItemType Directory -Path $ToolsDir -Force | Out-Null
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $util = Join-Path $ToolsDir 'IntuneWinAppUtil.exe'
+        Invoke-WebRequest -Uri $UtilUrl -OutFile $util -UseBasicParsing
+    }
+    Write-Host "  IntuneWinAppUtil : $util" -ForegroundColor DarkGray
+    Write-Host "  Source           : $SourceDir" -ForegroundColor DarkGray
+    Write-Host "  Setup file       : $SetupFile" -ForegroundColor DarkGray
+    Write-Host ''
+
+    New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
+    Write-Host '  Packaging (large installers take a minute)...' -ForegroundColor Cyan
+    & $util -c $SourceDir -s $SetupFile -o $OutputDir -q
+    if ($LASTEXITCODE -ne 0) { throw "IntuneWinAppUtil exited with code $LASTEXITCODE" }
+
+    $out = Get-ChildItem -Path $OutputDir -Filter '*.intunewin' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if (-not $out) { throw 'No .intunewin was produced' }
+
+    Write-Host ''
+    Write-Host '  SUCCESS' -ForegroundColor Green
+    Write-Host "  File : $($out.FullName)" -ForegroundColor White
+    Write-Host ('  Size : {0:N2} MB' -f ($out.Length / 1MB)) -ForegroundColor DarkGray
+    Write-Host ''
+    Write-Host '  Next: open INTUNE-SETTINGS.txt and create the app in Intune.' -ForegroundColor Cyan
+    Write-Host '        Upload detect.ps1 as the detection script.' -ForegroundColor Cyan
+    Start-Process explorer.exe -ArgumentList $OutputDir
+}
+catch {
+    Write-Host ''
+    Write-Host "  ERROR: $($_.Exception.Message)" -ForegroundColor Red
+    if ($_.Exception.Message -match 'download|remote|connect') {
+        Write-Host '  Get IntuneWinAppUtil.exe from https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool' -ForegroundColor Yellow
+        Write-Host "  and drop it next to this script or in $ToolsDir" -ForegroundColor Yellow
+    }
+    exit 1
+}
+`;
+}
+
+// Copy/paste flavour (no installer dropped) — unchanged workflow, C:\IntuneApps
+function buildPackagerScript({ appName, version, publisher, slug, instFile, installScript, uninstallScript, detectScript, downloadUrl }) {
+  const setupFile = installerType === 'script' ? 'install.ps1' : (instFile || 'setup.exe');
+  const b64Install = scriptToBase64(installScript), b64Uninstall = scriptToBase64(uninstallScript), b64Detect = scriptToBase64(detectScript);
+  const dateStr = new Date().toLocaleDateString('en-US');
+
+  let iconBlock = '';
+  if (iconData) {
+    const b64Icon = iconData.split(',')[1];
+    iconBlock = `\n# -- Write icon --\nWrite-Host "  Writing icon..." -ForegroundColor Gray\n[System.IO.File]::WriteAllBytes("C:\\IntuneApps\\$AppSlug-icon.${iconExt()}", [System.Convert]::FromBase64String('${b64Icon}'))`;
+  }
+
+  let installerBlock = '';
+  if (installerType !== 'script') {
+    const extOrder = installerType === 'msi' ? "'*.msi', '*.exe'" : "'*.exe', '*.msi'";
+    const safeUrl = (downloadUrl || '').replace(/'/g, '');
+    const urlLine = safeUrl
+      ? `Write-Host "  Download URL : ${safeUrl}" -ForegroundColor Cyan\nWrite-Host ""\nWrite-Host "  Opening download page in browser..." -ForegroundColor Gray\nStart-Process '${safeUrl}'\nWrite-Host ""`
+      : `Write-Host "  Download from the vendor's official site, then place the file below." -ForegroundColor Gray\nWrite-Host ""`;
+    installerBlock = `\n# -- Installer file check --\nWrite-Host ""\nWrite-Host "  ACTION REQUIRED" -ForegroundColor Yellow -BackgroundColor DarkRed\nWrite-Host "  Place the installer (.exe or .msi) in:" -ForegroundColor Yellow\nWrite-Host "  $SourceDir" -ForegroundColor Cyan\nWrite-Host "  Any version name is fine - the script finds it automatically." -ForegroundColor DarkGray\nWrite-Host ""\n${urlLine}\n$null = Read-Host "  Press ENTER when the installer is in the source folder"\n\n$installerExts = @(${extOrder})\n$foundInstaller = $null\nforeach ($ext in $installerExts) {\n    $match = Get-ChildItem -Path $SourceDir -Filter $ext | Sort-Object LastWriteTime -Descending | Select-Object -First 1\n    if ($match) { $foundInstaller = $match; break }\n}\nif (-not $foundInstaller) {\n    Write-Host "  ERROR: No .exe or .msi installer found in $SourceDir" -ForegroundColor Red\n    exit 1\n}\n$SetupFile = $foundInstaller.Name\nWrite-Host "  Found installer: $SetupFile" -ForegroundColor Green`;
+  }
+
+  return `#Requires -Version 5.1
+<#
+.SYNOPSIS  ${T.districtShort} Intune Win32 Auto-Packager
+.DESCRIPTION
+    Auto-generated by ${T.districtShort} ${T.portalName} - Win32 App Builder v2
+    App       : ${appName}${version ? ' ' + version : ''}
+    Publisher : ${publisher || 'N/A'}
+    Generated : ${dateStr}
+    Author    : ${T.author}
+.NOTES Run as Administrator.
+#>
+[CmdletBinding()] param()
+$ErrorActionPreference = 'Stop'
+
+$AppSlug    = '${slug}'
+$SourceDir  = "C:\\IntuneApps\\$AppSlug"
+$OutputDir  = "C:\\IntuneApps\\Output"
+$ToolsDir   = "C:\\IntuneApps\\Tools"
+$SetupFile  = '${setupFile.replace(/'/g, "''")}'
+$IntuneUtil = "$ToolsDir\\IntuneWinAppUtil.exe"
+$IntuneUtilUrl = 'https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe'
+
+Write-Host ""; Write-Host "  ================================================" -ForegroundColor Cyan
+Write-Host "   ${T.districtShort} Win32 Auto-Packager" -ForegroundColor Cyan
+Write-Host ${psq('   ' + appName + (version ? ' ' + version : ''))} -ForegroundColor White
+Write-Host "  ================================================" -ForegroundColor Cyan; Write-Host ""
+
+New-Item -ItemType Directory -Force -Path $SourceDir,$OutputDir,$ToolsDir | Out-Null
+Write-Host "  Source : $SourceDir" -ForegroundColor DarkGray
+Write-Host "  Output : $OutputDir" -ForegroundColor DarkGray; Write-Host ""
+
+[System.IO.File]::WriteAllBytes("$SourceDir\\install.ps1",   [System.Convert]::FromBase64String('${b64Install}'))
+[System.IO.File]::WriteAllBytes("$SourceDir\\uninstall.ps1", [System.Convert]::FromBase64String('${b64Uninstall}'))
+# detect.ps1 goes NEXT TO the source folder - it is uploaded to Intune separately, not packaged
+[System.IO.File]::WriteAllBytes("C:\\IntuneApps\\$AppSlug-detect.ps1", [System.Convert]::FromBase64String('${b64Detect}'))
+Write-Host "  Scripts written." -ForegroundColor Green; Write-Host ""
+${iconBlock}
+$found = @($IntuneUtil,"C:\\Tools\\IntuneWinAppUtil.exe","$PSScriptRoot\\IntuneWinAppUtil.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($found) { $IntuneUtil = $found; Write-Host "  IntuneWinAppUtil: $IntuneUtil" -ForegroundColor Green }
+else {
+    Write-Host "  Downloading IntuneWinAppUtil from Microsoft..." -ForegroundColor Yellow
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    try { Invoke-WebRequest -Uri $IntuneUtilUrl -OutFile $IntuneUtil -UseBasicParsing; Write-Host "  Downloaded." -ForegroundColor Green }
+    catch { Write-Host "  ERROR: Download failed. Get it from: https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool" -ForegroundColor Red; exit 1 }
+}
+Write-Host ""
+${installerBlock}
+
+Write-Host ""; Write-Host "  Packaging..." -ForegroundColor Cyan
+& $IntuneUtil -c $SourceDir -s $SetupFile -o $OutputDir -q
+
+if ($LASTEXITCODE -eq 0) {
+    $out = Get-ChildItem $OutputDir -Filter '*.intunewin' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    Write-Host ""; Write-Host "   SUCCESS!" -ForegroundColor Green
+    if ($out) { Write-Host "  File : $($out.FullName)" -ForegroundColor White; Write-Host "  Size : $([math]::Round($out.Length/1MB,2)) MB" -ForegroundColor DarkGray }
+    Write-Host "  Detection script: C:\\IntuneApps\\$AppSlug-detect.ps1" -ForegroundColor Cyan
+    Write-Host ""; Write-Host "  Next: Apps > Windows > Add > Windows app (Win32)" -ForegroundColor Cyan
+    Start-Process explorer.exe -ArgumentList $OutputDir
+} else { Write-Host "  ERROR: IntuneWinAppUtil exited $LASTEXITCODE" -ForegroundColor Red; exit 1 }`;
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// ZIP writer — store-only (installers are already compressed), streams the
+// installer from disk via Blob references so large files aren't copied
+// ═════════════════════════════════════════════════════════════════════════
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crcUpdate(crc, bytes) {
+  let c = crc;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return c >>> 0;
+}
+async function crcOfBlob(blob, onProgress) {
+  const CH = 8 * 1048576; let c = 0xFFFFFFFF;
+  for (let off = 0; off < blob.size; off += CH) {
+    c = crcUpdate(c, new Uint8Array(await blob.slice(off, off + CH).arrayBuffer()));
+    if (onProgress) onProgress(Math.min(1, (off + CH) / blob.size));
+  }
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+async function buildZip(entries, onProgress) {
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  const d = new Date();
+  const dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  for (const e of entries) {
+    const name = enc.encode(e.name), isBlob = e.data instanceof Blob;
+    const size = isBlob ? e.data.size : e.data.length;
+    const crc = isBlob ? await crcOfBlob(e.data, onProgress) : (crcUpdate(0xFFFFFFFF, e.data) ^ 0xFFFFFFFF) >>> 0;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034B50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+    lh.setUint16(10, dosTime, true); lh.setUint16(12, dosDate, true);
+    lh.setUint32(14, crc, true); lh.setUint32(18, size, true); lh.setUint32(22, size, true);
+    lh.setUint16(26, name.length, true);
+    parts.push(lh.buffer, name, e.data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014B50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+    ch.setUint16(12, dosTime, true); ch.setUint16(14, dosDate, true);
+    ch.setUint32(16, crc, true); ch.setUint32(20, size, true); ch.setUint32(24, size, true);
+    ch.setUint16(28, name.length, true); ch.setUint32(42, offset, true);
+    central.push(ch.buffer, name);
+    offset += 30 + name.length + size;
+  }
+  const cdSize = central.reduce((s, p) => s + p.byteLength, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054B50, true); end.setUint16(8, entries.length, true); end.setUint16(10, entries.length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, end.buffer], { type: 'application/zip' });
+}
+
+const crlf = (s) => s.replace(/\r?\n/g, '\r\n');
+const textBytes = (s, bom) => new TextEncoder().encode((bom ? '\uFEFF' : '') + crlf(s));
+
+async function downloadZip() {
+  if (!lastBuild || !installerBlob) return;
+  const btn = document.getElementById('zipBtn');
+  btn.disabled = true;
+  const { c, install, uninstall, detect, settings, packager } = lastBuild;
+  const root = c.slug + '/';
+  const setupName = c.instFile || installerBlob.name;
+  const readme = `${c.appName}${c.version ? ' ' + c.version : ''} - Win32 package
+Generated ${c.date} by ${T.districtShort} ${T.portalName} - Win32 App Builder v2
+
+1. Extract this ZIP (if Windows blocks scripts: right-click the ZIP > Properties > Unblock first).
+2. Double-click Build-IntuneWin.cmd. The .intunewin appears in .\\Output\\
+3. Create the app in Intune using INTUNE-SETTINGS.txt.
+4. Upload detect.ps1 as the custom detection script.
+5. Assign to a TEST group first.
+
+Folder layout
+  Source\\               -> becomes the .intunewin (installer + install/uninstall scripts)
+  detect.ps1            -> uploaded separately in Intune's Detection rules step
+  icon.*                -> Intune app logo
+  INTUNE-SETTINGS.txt   -> every field you need in the Intune wizard
+`;
+  const entries = [
+    { name: root + 'Source/' + setupName, data: installerBlob },
+    { name: root + 'Source/install.ps1', data: textBytes(install, true) },
+    { name: root + 'Source/uninstall.ps1', data: textBytes(uninstall, true) },
+    { name: root + 'detect.ps1', data: textBytes(detect, true) },
+    { name: root + 'Build-IntuneWin.ps1', data: textBytes(packager, true) },
+    { name: root + 'Build-IntuneWin.cmd', data: textBytes('@echo off\r\npowershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Build-IntuneWin.ps1"\r\npause\r\n', false) },
+    { name: root + 'INTUNE-SETTINGS.txt', data: textBytes(settings, true) },
+    { name: root + 'README.txt', data: textBytes(readme, false) },
+  ];
+  if (iconData) {
+    const bin = atob(iconData.split(',')[1]), b = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    entries.push({ name: root + 'icon.' + iconExt(), data: b });
+  }
+  try {
+    const zip = await buildZip(entries, (p) => { btn.textContent = 'Zipping… ' + Math.round(p * 100) + '%'; });
+    const url = URL.createObjectURL(zip), a = document.createElement('a');
+    a.href = url; a.download = c.slug + '-Win32.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    btn.textContent = '✓ Downloaded — click to download again';
+  } catch (err) {
+    showError('ZIP failed: ' + err.message);
+    btn.textContent = '⬇ Download Package ZIP';
+  } finally { btn.disabled = false; }
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+function showTab(id, el) {
+  document.querySelectorAll('.script-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.script-block').forEach(b => b.classList.remove('visible'));
+  if (el) el.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('visible');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function copyCode(id, btn) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => {
+    btn.textContent = '✓ Copied'; btn.classList.add('copied');
+    setTimeout(() => { btn.innerHTML = '⎘ Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+function showProgress() {
+  document.getElementById('progressSteps').style.display = 'flex';
+  ['step1', 'step2', 'step3', 'step4', 'step5'].forEach(id => document.getElementById(id).className = 'progress-step');
+}
+function hideProgress() { document.getElementById('progressSteps').style.display = 'none'; }
+function setStep(n, state) { document.getElementById('step' + n).className = 'progress-step ' + state; }
+function setLoading(on) {
+  document.getElementById('generateBtn').disabled = on;
+  document.getElementById('spinner').className = on ? 'btn-spinner on' : 'btn-spinner';
+  document.getElementById('btnText').textContent = on ? 'Building Package...' : '⚙️ Build Win32 Package';
+}
+function showError(msg) { const el = document.getElementById('errorMsg'); el.textContent = msg; el.style.display = 'flex'; }
+function hideError() { document.getElementById('errorMsg').style.display = 'none'; }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+window.addEventListener('DOMContentLoaded', updateDetectFields);
+</script>
+
+<style id="toolHelpCss">
+#toolHelpOverlay{display:none;position:fixed;inset:0;z-index:99999;background:rgba(2,5,14,.9);backdrop-filter:blur(6px);align-items:center;justify-content:center;}
+#toolHelpOverlay.show{display:flex;}
+#toolHelpPanel{width:min(84%,980px);max-height:82vh;background:linear-gradient(160deg,#0d1829 0%,#080f1c 100%);border:1px solid rgba(6,182,212,.3);border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 0 1px rgba(6,182,212,.1);}
+.help-hdr{display:flex;align-items:center;gap:18px;padding:28px 32px 20px;border-bottom:1px solid rgba(6,182,212,.12);}
+.help-hdr-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.help-hdr-text h2{margin:0 0 4px;font-size:1.45rem;font-weight:700;color:#f0f4ff;}
+.help-hdr-text p{margin:0;font-size:.88rem;color:rgba(148,163,184,.8);}
+.help-bdy{padding:24px 32px;overflow-y:auto;flex:1;line-height:1.65;}
+.help-bdy .help-sec{margin-bottom:22px;}
+.help-bdy .help-sec h3{margin:0 0 8px;font-size:.82rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#06b6d4;}
+.help-bdy .help-sec p{margin:0 0 8px;color:rgba(203,213,225,.85);font-size:.93rem;}
+.help-steps{list-style:none;padding:0;margin:8px 0;}
+.help-steps li{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.91rem;color:rgba(203,213,225,.85);}
+.help-steps li:last-child{border-bottom:none;}
+.help-steps li .step-num{min-width:22px;height:22px;border-radius:50%;background:rgba(6,182,212,.18);color:#22d3ee;font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.help-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.help-chip{padding:4px 12px;border-radius:999px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);color:#22d3ee;font-size:.8rem;font-family:monospace;}
+.help-warn{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);color:rgba(253,224,122,.85);font-size:.87rem;}
+.help-ftr{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-top:1px solid rgba(6,182,212,.12);background:rgba(6,182,212,.03);}
+.help-dismiss-lbl{display:flex;align-items:center;gap:8px;font-size:.85rem;color:rgba(148,163,184,.7);cursor:pointer;}
+.help-dismiss-lbl input{accent-color:#06b6d4;}
+.help-got-it{padding:10px 28px;border-radius:10px;background:linear-gradient(135deg,#06b6d4,#0891b2);border:none;color:#fff;font-weight:700;font-size:.9rem;cursor:pointer;transition:opacity .15s;}
+.help-got-it:hover{opacity:.85;}
+</style>
+<div id="toolHelpOverlay">
+  <div id="toolHelpPanel">
+    <div class="help-hdr">
+      <div class="help-hdr-icon" id="helpHdrIcon"></div>
+      <div class="help-hdr-text"><h2 id="helpHdrTitle"></h2><p id="helpHdrSub"></p></div>
+    </div>
+    <div class="help-bdy" id="helpBdy"></div>
+    <div class="help-ftr">
+      <label class="help-dismiss-lbl"><input type="checkbox" id="helpDismissCb"> Don't show this again</label>
+      <button class="help-got-it" onclick="dismissToolHelp()">Got it ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═════════════════════════════════════════════════════════════════════════
+// Demo mode: sample installers. Each one fills the form exactly as dropping the
+// real file would, then builds from the real templates (no AI, no key needed).
+// ═════════════════════════════════════════════════════════════════════════
+const DEMO_INSTALLERS = [
+  { label: '7-Zip (MSI)', hint: 'MSI · exact Product Code', size: 1910784,
+    meta: { kind: 'msi', fileName: '7z2409-x64.msi', productName: '7-Zip 24.09 (x64 edition)', productVersion: '24.09.00.0', manufacturer: 'Igor Pavlov',
+            framework: 'msi', productCode: '{23170F69-40C1-2702-2409-000001000000}', upgradeCode: '{23170F69-40C1-2702-0000-000004000000}', platform: 'x64', allUsers: '1', notes: [] } },
+  { label: 'Notepad++ (NSIS EXE)', hint: 'EXE · NSIS fingerprint', size: 5242880,
+    meta: { kind: 'exe', fileName: 'npp.8.7.Installer.x64.exe', productName: 'Notepad++', productVersion: '8.7', manufacturer: 'Notepad++ Team',
+            framework: 'nsis', machine: 0x14C, level: 'requireAdministrator', notes: [{ t: 'warn', m: 'NSIS switches are case-sensitive (/S). Some vendors disable silent mode — test once on a lab machine.' }] } },
+  { label: 'VLC media player (NSIS EXE)', hint: 'EXE · NSIS fingerprint', size: 44040192,
+    meta: { kind: 'exe', fileName: 'vlc-3.0.21-win64.exe', productName: 'VLC media player', productVersion: '3.0.21', manufacturer: 'VideoLAN',
+            framework: 'nsis', machine: 0x14C, level: 'requireAdministrator', notes: [] } },
+  { label: 'Visual C++ Redistributable (WiX Burn)', hint: 'EXE · Burn bundle', size: 25690112,
+    meta: { kind: 'exe', fileName: 'VC_redist.x64.exe', productName: 'Microsoft Visual C++ 2015-2022 Redistributable (x64)', productVersion: '14.40.33816.0', manufacturer: 'Microsoft Corporation',
+            framework: 'burn', machine: 0x14C, level: 'requireAdministrator', notes: [{ t: 'info', m: 'WiX Burn bundle: uninstall uses the bundle’s QuietUninstallString.' }] } },
+  { label: 'Unknown vendor EXE', hint: 'Not recognised → AI (needs a key)', size: 3145728,
+    meta: { kind: 'exe', fileName: 'LabSoftSetup.exe', productName: 'LabSoft Classroom', productVersion: '5.2.1', manufacturer: 'LabSoft Inc.',
+            framework: null, machine: 0x14C, level: 'asInvoker', notes: [{ t: 'warn', m: 'Installer framework not recognised. Scripts will be written by AI.' }] } }
+];
+function demoLoadInstaller(i) {
+  const d = DEMO_INSTALLERS[i];
+  hideError(); resetOutput();
+  installerBlob = null;
+  installerMeta = { ...d.meta, notes: [{ t: 'info', m: 'Demo sample: details shown as if read from the real installer file.' }, ...(d.meta.notes || [])], size: d.size };
+  document.getElementById('fileInfo').style.display = 'block';
+  document.getElementById('fiName').innerHTML = esc(d.meta.fileName) + '<span class="demo-src">SAMPLE</span>';
+  document.getElementById('fiSize').textContent = fmtSize(d.size);
+  applyInstallerMeta(installerMeta);
+  renderFileInfo(installerMeta);
+  document.getElementById('fileInfo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+if (KitDemo.active) {
+  KitDemo.panel({
+    sections: [
+      { title: 'Load a sample installer', chips: DEMO_INSTALLERS.map((d, i) => ({ label: d.label, hint: d.hint, onClick: () => demoLoadInstaller(i) })) },
+      { title: 'Build', actions: [{ label: '▶ Build Win32 package', onClick: () => generate() }] }
+    ],
+    onReset: () => { clearInstaller(); hideError(); ['appName', 'appVersion', 'appPublisher', 'installerFile', 'silentFlags', 'detect1', 'detect2', 'appNotes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  });
+}
+</script>
+<script>
+var TOOL_HELP={
+  id:'win32',
+  title:'Win32 App Builder',
+  subtitle:'Intune Win32 Package Generator · ' + Kit.tokens().publisher,
+  icon:'📦',
+  iconBg:'rgba(6,182,212,0.15)',
+  body:`
+<div class="help-sec">
+  <h3>What This Tool Does</h3>
+  <p>Builds everything needed to deploy a Win32 app through Intune: install / uninstall / detection scripts, the Intune wizard settings, and a packager that produces the <code>.intunewin</code>.</p>
+</div>
+<div class="help-sec">
+  <h3>Fastest Way — Drop The Installer</h3>
+  <ol class="help-steps">
+    <li><span class="step-num">1</span>Drop the vendor's <strong>.msi</strong> or <strong>.exe</strong> on the Installer File card. It is read in your browser — nothing is uploaded.</li>
+    <li><span class="step-num">2</span>Name, version, publisher, silent switches, detection and icon fill in automatically. MSIs give the exact Product Code; EXEs are fingerprinted (Inno Setup, NSIS, WiX Burn, InstallShield, Advanced Installer, Squirrel).</li>
+    <li><span class="step-num">3</span>Click <strong>Build Win32 Package</strong>, then <strong>Download Package ZIP</strong>.</li>
+    <li><span class="step-num">4</span>Extract and double-click <code>Build-IntuneWin.cmd</code>. Follow <code>INTUNE-SETTINGS.txt</code> in Intune and upload <code>detect.ps1</code>.</li>
+  </ol>
+  <p>The badge next to the file tells you how scripts are built: <strong>Template ✓</strong> (known framework, no AI), <strong>Template — review</strong> (known but quirky, test first), or <strong>AI fallback</strong> (unrecognised EXE).</p>
+</div>
+<div class="help-sec">
+  <h3>No Installer Handy?</h3>
+  <p>Type the app name, use <strong>Research App &amp; Auto-fill</strong>, and build. AI writes the scripts, and the Packager tab gives a script that prompts you to drop the installer in later.</p>
+</div>
+<div class="help-sec">
+  <h3>What Gets Generated</h3>
+  <div class="help-chips">
+    <span class="help-chip">install.ps1</span>
+    <span class="help-chip">uninstall.ps1</span>
+    <span class="help-chip">detect.ps1</span>
+    <span class="help-chip">INTUNE-SETTINGS.txt</span>
+    <span class="help-chip">Build-IntuneWin.cmd</span>
+    <span class="help-chip">icon.png</span>
+  </div>
+</div>
+<div class="help-warn">⚠ Detection is version-specific (installed version ≥ this package), which is what Supersedence needs. New version = new Win32 app object + Supersedence — never delete the old one. Always test in a non-production group first.</div>`
+};
+function showToolHelp(force){
+  var lsKey='toolhelp_'+TOOL_HELP.id;
+  try{ if(!force && localStorage.getItem(lsKey))return; }catch(e){}
+  document.getElementById('helpHdrIcon').textContent=TOOL_HELP.icon;
+  document.getElementById('helpHdrIcon').style.background=TOOL_HELP.iconBg||'rgba(6,182,212,0.15)';
+  document.getElementById('helpHdrTitle').textContent=TOOL_HELP.title;
+  document.getElementById('helpHdrSub').textContent=TOOL_HELP.subtitle;
+  document.getElementById('helpBdy').innerHTML=TOOL_HELP.body;
+  document.getElementById('toolHelpOverlay').classList.add('show');
+}
+function dismissToolHelp(){
+  var cb=document.getElementById('helpDismissCb');
+  try{ if(cb&&cb.checked)localStorage.setItem('toolhelp_'+TOOL_HELP.id,'1'); }catch(e){}
+  var ov=document.getElementById('toolHelpOverlay');
+  if(!ov)return;
+  ov.style.opacity='0';ov.style.transition='opacity .2s';
+  setTimeout(function(){ov.classList.remove('show');ov.style.opacity='';ov.style.transition='';},200);
+}
+(function(){
+  if (window.KitDemo && KitDemo.active) return;
+  try{ if(localStorage.getItem('toolhelp_'+TOOL_HELP.id))return; }catch(e){}
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){showToolHelp(false);},500);});}
+  else{setTimeout(function(){showToolHelp(false);},500);}
+})();
+</script>
+</body>
+</html>

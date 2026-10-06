@@ -1,0 +1,23 @@
+{
+  "files": [
+    "index.html",
+    "setup.html",
+    "kit-config.js",
+    "kit-brand.js",
+    "assets/kit-theme-dark.css",
+    "assets/kit-logo.svg",
+    "LICENSE",
+    "kit-demo.js",
+    "redirect.html",
+    "tools/autopilot/index.html",
+    "tools/remediation/index.html",
+    "tools/remediation/presets.js",
+    "tools/win32/index.html",
+    "samples/autopilot-sample-clean.csv",
+    "samples/autopilot-sample-with-problems.csv",
+    "guides/getting-started.html",
+    "guides/autopilot.html",
+    "guides/remediation.html",
+    "guides/win32.html"
+  ]
+}

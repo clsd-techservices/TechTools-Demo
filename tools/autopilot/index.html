@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autopilot Import &amp; Check · {{portalName}}</title>
+<link rel="stylesheet" href="../../assets/kit-theme-dark.css">
+<script src="../../kit-config.js"></script>
+<script src="../../kit-brand.js"></script>
+<script src="../../kit-demo.js"></script>
+<style>
+/* ── Header extras ──────────────────────────────────── */
+.back-btn{font-size:12px;font-weight:700;color:var(--brand-pale);text-decoration:none;padding:5px 12px;background:rgba(var(--brand-pale-rgb),.10);border:1px solid rgba(var(--brand-pale-rgb),.30);border-radius:6px;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.back-btn:hover{background:rgba(var(--brand-pale-rgb),.2);color:var(--text-primary)}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.mode-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:var(--radius-full);border:1px solid var(--border-glass);color:var(--text-secondary);white-space:nowrap}
+.mode-chip .d{width:7px;height:7px;border-radius:50%}
+.mode-live .d{background:var(--color-success);box-shadow:0 0 6px var(--color-success)}
+.mode-demo .d{background:var(--color-warning);box-shadow:0 0 6px var(--color-warning)}
+.mode-offline .d{background:var(--text-muted)}
+.hdr-btn{font-size:12px;font-weight:700;padding:5px 12px;background:rgba(255,255,255,.06);border:1px solid var(--border-glass);color:var(--text-secondary);border-radius:6px;cursor:pointer;font-family:inherit}
+.hdr-btn:hover{background:rgba(255,255,255,.1);color:var(--text-primary)}
+
+/* ── Layout ─────────────────────────────────────────── */
+.main-content{padding:24px;max-width:1200px;margin:0 auto;width:100%}
+.tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border-glass)}
+.tab{padding:10px 16px;font:700 13px var(--font-ui);color:var(--text-muted);background:none;border:0;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-1px}
+.tab:hover{color:var(--text-secondary)}
+.tab.active{color:var(--text-primary);border-bottom-color:var(--brand-pale)}
+.panel{display:none}.panel.active{display:block}
+
+.step-card{background:var(--glass-card);border:1px solid var(--border-glass);border-radius:var(--radius-lg);padding:20px 22px;margin-bottom:20px;backdrop-filter:var(--blur-panel)}
+.step-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.step-num{width:24px;height:24px;border-radius:50%;background:rgba(var(--brand-pale-rgb),.16);color:var(--brand-pale);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+.step-title{font-size:14px;font-weight:700;color:var(--text-primary)}
+.step-sub{font-size:12px;color:var(--text-muted);margin:-8px 0 14px 34px;line-height:1.55}
+.pcode{font-family:var(--font-mono);color:var(--brand-pale);font-size:11px}
+
+/* sign-in / offline notices */
+.notice{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:16px 20px;margin-bottom:20px;border-radius:var(--radius-lg);border:1px solid var(--border-glass-bright);background:rgba(var(--brand-rgb),.18)}
+.notice .ic{font-size:26px}
+.notice .tx{flex:1;min-width:220px;font-size:13px;color:var(--text-secondary);line-height:1.55}
+.notice .tx b{color:var(--text-primary);display:block;font-size:14px;margin-bottom:2px}
+.notice .acts{display:flex;gap:8px;flex-wrap:wrap}
+
+/* dropzone */
+.dropzone{border:2px dashed var(--border-glass-bright);border-radius:var(--radius-md);padding:32px 20px;text-align:center;cursor:pointer;transition:all .15s;background:rgba(0,0,0,.15)}
+.dropzone:hover,.dropzone.dragover{border-color:var(--brand-pale);background:rgba(var(--brand-pale-rgb),.06)}
+.dropzone-icon{font-size:28px;margin-bottom:8px}
+.dropzone-title{font-size:13px;font-weight:700;color:var(--text-primary)}
+.dropzone-sub{font-size:11.5px;color:var(--text-muted);margin-top:4px}
+.file-chip{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(var(--brand-pale-rgb),.08);border:1px solid rgba(var(--brand-pale-rgb),.25);border-radius:8px;font-size:12.5px;color:var(--text-secondary);flex-wrap:wrap}
+.file-chip strong{color:var(--text-primary)}
+.file-chip button{margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:15px}
+.file-chip button:hover{color:var(--color-error)}
+.sample-link{font-size:12px;color:var(--brand-pale);background:none;border:0;cursor:pointer;text-decoration:underline;font-family:inherit;padding:0;margin-top:10px}
+
+/* group tag */
+.tag-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag-input{font-size:13px;padding:8px 12px;font-family:inherit;background:var(--glass-input);border:1px solid var(--border-glass);color:var(--text-primary);border-radius:8px;width:260px;max-width:100%}
+.tag-input:focus,.row-tag-input:focus,.ap-search-input:focus{outline:none;border-color:var(--border-glass-focus)}
+.tag-loading{font-size:11px;color:var(--text-muted)}
+
+/* tables */
+.table-card{background:var(--glass-card);border:1px solid var(--border-glass);border-radius:var(--radius-lg);overflow:clip;margin-bottom:20px;backdrop-filter:var(--blur-panel)}
+.table-hdr{padding:14px 18px;border-bottom:1px solid var(--border-glass);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.table-title{font-size:13px;font-weight:700;color:var(--text-primary)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.row-count{font-size:12px;color:var(--text-muted);white-space:nowrap}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:460px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;min-width:760px}
+thead th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border-glass);background:rgba(var(--bg-deep-rgb),.85);white-space:nowrap;position:sticky;top:0;z-index:1}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.04)}
+tbody tr:hover{background:rgba(255,255,255,.03)}
+tbody tr.invalid{background:rgba(248,113,113,.05)}
+td{padding:8px 14px;font-size:12.5px;color:var(--text-secondary);vertical-align:middle}
+.mono-hash{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;display:inline-block;vertical-align:middle}
+.row-serial{font-weight:600;color:var(--text-primary);font-family:var(--font-mono);font-size:12px}
+.row-tag-input{font-size:12px;padding:5px 9px;font-family:inherit;background:var(--glass-input);border:1px solid var(--border-glass);color:var(--text-primary);border-radius:6px;width:150px}
+.row-remove{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:15px;padding:2px 6px}
+.row-remove:hover{color:var(--color-error)}
+.detail{font-size:12px;line-height:1.45}
+.detail .why{display:block;color:var(--text-muted);font-size:11px;margin-top:2px}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.b-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:currentColor}
+.b-green{background:var(--color-success-bg);color:var(--color-success);border:1px solid rgba(52,211,115,.28)}
+.b-red{background:var(--color-error-bg);color:var(--color-error);border:1px solid rgba(248,113,113,.28)}
+.b-yellow{background:var(--color-warning-bg);color:var(--color-warning);border:1px solid rgba(251,191,36,.28)}
+.b-gray{background:rgba(255,255,255,.06);color:var(--text-muted);border:1px solid var(--border-glass)}
+.b-blue{background:rgba(var(--brand-pale-rgb),.14);color:var(--brand-pale);border:1px solid rgba(var(--brand-pale-rgb),.3)}
+
+.btn-row{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn-note{font-size:12px;color:var(--text-muted)}
+.summary-strip{display:flex;gap:18px;padding:14px 18px;flex-wrap:wrap;border-bottom:1px solid var(--border-glass)}
+.sum-item{font-size:12px;color:var(--text-muted)}
+.sum-item strong{color:var(--text-primary);font-size:15px;margin-right:4px}
+.empty-state{padding:40px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.empty-icon{font-size:30px;opacity:.4}
+.empty-title{font-size:13px;font-weight:600;color:var(--text-secondary)}
+.empty-sub{font-size:11.5px;color:var(--text-muted)}
+.poll-note{font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+
+/* readiness */
+.ap-search-wrap{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ap-search-input{background:var(--glass-input);border:1px solid var(--border-glass);border-radius:8px;color:var(--text-primary);font-family:var(--font-mono);font-size:13px;padding:9px 14px;width:260px;max-width:100%}
+.ap-panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+@media (max-width:780px){.ap-panels{grid-template-columns:1fr}}
+.ap-panel{background:rgba(0,0,0,.18);border:1px solid var(--border-glass);border-radius:10px;padding:16px 18px;min-width:0}
+.ap-panel__title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:14px}
+.ap-info-row{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;min-width:0}
+.ap-info-label{color:var(--text-muted);flex-shrink:0;width:100px;font-size:11px}
+.ap-info-val{color:var(--text-secondary);font-family:var(--font-mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ap-info-val--hi{color:var(--text-primary);font-weight:700;font-size:13px}
+.ap-score-wrap{display:flex;align-items:center;gap:16px;margin-bottom:12px}
+.ap-score-num{font-size:44px;font-weight:800;line-height:1}
+.ap-score-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-top:3px}
+.ap-score-bar-wrap{height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-bottom:14px}
+.ap-score-bar{height:100%;border-radius:3px;transition:width .6s ease;background:currentColor}
+.ap-check{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.ap-check:last-child{border-bottom:none}
+.ap-check__icon{font-size:14px;flex-shrink:0;margin-top:1px;line-height:1}
+.ap-check__title{color:var(--text-secondary);font-weight:600;line-height:1.3}
+.ap-check__detail{color:var(--text-muted);font-size:11px;margin-top:2px;font-family:var(--font-mono)}
+.ap-score--ready{color:var(--color-success)}
+.ap-score--warn{color:var(--color-warning)}
+.ap-score--caution{color:#fb923c}
+.ap-score--fail{color:var(--color-error)}
+.ap-score--ready .ap-check__title,.ap-score--warn .ap-check__title,.ap-score--caution .ap-check__title,.ap-score--fail .ap-check__title{color:var(--text-secondary)}
+.ap-loading{color:var(--text-muted);font-size:13px;padding:22px 0;text-align:center}
+.ap-error{color:var(--color-error);font-size:13px;padding:14px 0}
+.ap-next{margin-top:12px;padding:10px 12px;border-radius:8px;background:rgba(var(--brand-pale-rgb),.07);border:1px solid rgba(var(--brand-pale-rgb),.18);font-size:12px;color:var(--text-secondary);line-height:1.5}
+
+/* toasts */
+.toast-area{position:fixed;bottom:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:8px;max-width:calc(100vw - 40px)}
+.toast{font-size:13px;font-weight:600;padding:10px 16px;border-radius:8px;backdrop-filter:blur(12px);box-shadow:0 4px 16px rgba(0,0,0,.45);animation:slideUp .2s ease;max-width:400px}
+@keyframes slideUp{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+.t-success{background:rgba(52,211,115,.2);border:1px solid rgba(52,211,115,.4);color:#a7f3c4}
+.t-error{background:rgba(248,113,113,.2);border:1px solid rgba(248,113,113,.4);color:#fecaca}
+.t-info{background:rgba(var(--brand-pale-rgb),.2);border:1px solid rgba(var(--brand-pale-rgb),.4);color:var(--text-primary)}
+
+/* help */
+.help-list{font-size:13px;color:var(--text-secondary);line-height:1.7;padding-left:20px}
+.help-list b{color:var(--text-primary)}
+.tt-modal-overlay{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;padding:16px;background:var(--bg-overlay);backdrop-filter:blur(6px)}
+.tt-modal-overlay.open{display:flex}
+@media (max-width:640px){.main-content{padding:16px}.step-sub{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="tt-app">
+  <header class="tt-header">
+    <a href="../../index.html" class="back-btn">&larr; {{portalName}}</a>
+    <img src="../../assets/kit-logo.svg" alt="{{districtShort}} logo" class="tt-header__logo" style="max-width:120px;object-fit:contain">
+    <div class="tt-header__divider"></div>
+    <div>
+      <div class="tt-header__title">Autopilot Import &amp; Check</div>
+      <div class="tt-header__subtitle">Hardware hash import, group tags, and device readiness</div>
+    </div>
+    <span class="tt-header__badge">v2.0</span>
+    <div class="header-right">
+      <span class="mode-chip" id="modeChip"><span class="d"></span><span id="modeText"></span></span>
+      <button class="hdr-btn" type="button" onclick="openHelp()">? Help</button>
+    </div>
+  </header>
+
+  <main class="tt-main" style="padding:0;max-width:none">
+    <div class="main-content">
+      <div id="noticeArea"></div>
+
+      <div class="tabs" role="tablist">
+        <button class="tab active" role="tab" aria-selected="true" data-tab="import" type="button">&#8593; Import</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="check" type="button">&#10003; Readiness Check</button>
+      </div>
+
+      <!-- ═════════ IMPORT ═════════ -->
+      <section class="panel active" id="panel-import" role="tabpanel">
+        <div class="step-card">
+          <div class="step-hdr"><div class="step-num">1</div><div class="step-title">Upload hardware hash CSV</div></div>
+          <div class="step-sub">The CSV from <span class="pcode">Get-WindowsAutopilotInfo -OutputFile hashes.csv</span> or the OA3 tool: Device Serial Number, Windows Product ID, Hardware Hash, and an optional Group Tag. Every row is checked before anything is imported.</div>
+          <div id="dropzoneWrap">
+            <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload CSV">
+              <div class="dropzone-icon">&#128196;</div>
+              <div class="dropzone-title">Drop CSV here or click to browse</div>
+              <div class="dropzone-sub">One row per device</div>
+            </div>
+            <button class="sample-link" type="button" id="sampleLink">Download a sample CSV to try it</button>
+          </div>
+          <input type="file" id="fileInput" accept=".csv,text/csv" style="display:none">
+          <div id="fileChipWrap" style="display:none;margin-top:4px">
+            <div class="file-chip">
+              <span>&#128206;</span>
+              <span><strong id="fileChipName"></strong> &middot; <span id="fileChipCount"></span></span>
+              <button type="button" onclick="clearFile()" title="Remove file" aria-label="Remove file">&#10005;</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-hdr"><div class="step-num">2</div><div class="step-title">Set group tag</div></div>
+          <div class="step-sub">Tagging at import time drops devices straight into the right Autopilot profile, with no manual tagging in Intune afterwards. Apply one tag to every row, then adjust individual rows below.</div>
+          <div class="tag-row">
+            <input type="text" class="tag-input" id="batchTagInput" list="groupTagList" placeholder="e.g. {{groupTagHint}}" aria-label="Group tag">
+            <datalist id="groupTagList"></datalist>
+            <button class="tt-btn tt-btn--secondary" type="button" onclick="applyTagToAll()">Apply to all rows</button>
+            <span class="tag-loading" id="tagLoadingMsg"></span>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-hdr">
+            <div class="table-title">Devices to import</div>
+            <div class="hdr-right"><span class="row-count" id="rowCount"></span></div>
+          </div>
+          <div class="table-scroll"><div id="previewTableArea"></div></div>
+          <div style="padding:0 18px 18px">
+            <div class="btn-row">
+              <button class="tt-btn tt-btn--primary" id="importBtn" type="button" onclick="importAll()" disabled>&#8593; Import to Autopilot</button>
+              <button class="tt-btn tt-btn--secondary" id="exportBtn" type="button" onclick="exportCsv()" disabled>Download clean CSV</button>
+              <button class="tt-btn tt-btn--ghost" id="clearAllBtn" type="button" onclick="clearFile()" disabled>Clear all</button>
+              <span class="btn-note" id="importNote"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card" id="resultsCard" style="display:none">
+          <div class="summary-strip" id="summaryStrip"></div>
+          <div class="table-hdr">
+            <div class="table-title">Import status</div>
+            <div class="hdr-right">
+              <span class="poll-note" id="pollNote"></span>
+              <button class="tt-btn tt-btn--ghost" id="refreshStatusBtn" type="button" onclick="checkStatus()">&#8635; Refresh status</button>
+            </div>
+          </div>
+          <div class="table-scroll"><div id="resultsTableArea"></div></div>
+        </div>
+      </section>
+
+      <!-- ═════════ READINESS ═════════ -->
+      <section class="panel" id="panel-check" role="tabpanel">
+        <div class="step-card">
+          <div class="step-hdr"><div class="step-num">&#10003;</div><div class="step-title">Is this device ready for Autopilot?</div></div>
+          <div class="step-sub">Look up a serial number or Intune device name. You'll get registration, profile, group tag, last check-in, and enrollment state, scored out of 100.</div>
+          <div class="ap-search-wrap">
+            <input type="text" id="apSearchInput" class="ap-search-input" placeholder="Serial or device name" autocomplete="off" spellcheck="false" aria-label="Serial or device name">
+            <button class="tt-btn tt-btn--primary" id="apBtn" type="button" onclick="apCheck()">Check</button>
+          </div>
+          <div id="apResults"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="tt-footer">
+    <span>&copy; {{year}} {{districtShort}} {{deptName}} &middot; {{credit}} &middot; MIT License</span>
+    <span>Autopilot Import &amp; Check v2.0</span>
+  </footer>
+</div>
+
+<div class="tt-modal-overlay" id="helpOverlay" onclick="if(event.target===this)closeHelp()">
+  <div class="ttkit-modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle" style="width:min(560px,100%)">
+    <h3 id="helpTitle">Autopilot Import &amp; Check</h3>
+    <ol class="help-list">
+      <li><b>Upload</b> a hardware hash CSV. Rows with a bad hash, a missing serial, or a duplicate are flagged and skipped.</li>
+      <li><b>Tag</b> everything at once or row by row.</li>
+      <li><b>Import.</b> Status refreshes on its own for a few minutes; failures show the reason and what to do about it.</li>
+      <li><b>Readiness Check</b> scores any serial: registered (30), profile assigned (35), group tag (15), recent check-in (10), not already enrolled (10).</li>
+    </ol>
+    <p id="helpMode" style="margin-top:12px"></p>
+    <div class="row"><button class="tt-btn tt-btn--primary" type="button" onclick="closeHelp()">Got it</button></div>
+  </div>
+</div>
+<div class="toast-area" id="toastArea" aria-live="polite"></div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════
+//  MODE: live (Microsoft 365 configured) · demo (sample data) · offline
+// ══════════════════════════════════════════════════════════
+const MS = Kit.config.microsoft || {};
+const MODE = KitDemo.active ? 'demo' : (Kit.isLive() ? 'live' : 'offline');
+const SCOPES = ['User.Read', 'DeviceManagementServiceConfig.ReadWrite.All', 'DeviceManagementManagedDevices.Read.All'];
+const BATCH_SIZE = 5;
+const POLL_MS = MODE === 'demo' ? 4000 : 15000;
+const MAX_POLL_ATTEMPTS = MODE === 'demo' ? 14 : 8;
+
+// Plain-English explanations for Autopilot import errors
+const ERROR_HELP = {
+  ZtdDeviceAlreadyAssigned: 'Already registered in this tenant. Nothing to do, unless you meant to re-import: delete the existing Autopilot record first.',
+  ZtdDeviceAssignedToOtherTenant: 'Registered to a different organization’s tenant. Ask the previous owner or the reseller to deregister it, then import again.',
+  ZtdDeviceDuplicated: 'This device appears more than once in the upload.',
+  ZtdDeviceAssignedToOtherTenantAndAlreadyAssigned: 'Registered to another tenant. Ask the previous owner or reseller to deregister it.',
+  ZtdDeviceBadHardwareHash: 'The hardware hash is damaged or incomplete. Re-run Get-WindowsAutopilotInfo on the device.',
+  'Throttled': 'Microsoft Graph asked us to slow down. Try again in a minute.'
+};
+
+let rows = [];        // { serial, hash, pkid, groupTag, status, importId, error, errorCode, issues[] }
+let fileName = '';
+let pollTimer = null, pollAttempts = 0;
+let msalApp = null, account = null;
+
+
+// ══════════════════════════════════════════════════════════
+//  GRAPH LAYER: one interface, live or simulated
+// ══════════════════════════════════════════════════════════
+const Graph = {
+  async get(url) { return MODE === 'demo' ? DemoTenant.get(url) : liveGet(url); },
+  async batch(requests) { return MODE === 'demo' ? DemoTenant.batch(requests) : liveBatch(requests); }
+};
+
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s); });
+}
+async function initMsal() {
+  await loadScript('https://alcdn.msftauth.net/browser/2.38.2/js/msal-browser.min.js');
+  msalApp = new msal.PublicClientApplication({
+    auth: { clientId: MS.clientId, authority: 'https://login.microsoftonline.com/' + MS.tenantId, redirectUri: Kit.url('redirect.html') },
+    cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
+  });
+  await msalApp.initialize();
+  await msalApp.handleRedirectPromise();
+  account = msalApp.getAllAccounts()[0] || null;
+  if (account) msalApp.setActiveAccount(account);
+}
+async function signIn() {
+  try {
+    const r = await msalApp.loginPopup({ scopes: SCOPES });
+    account = r.account; msalApp.setActiveAccount(account);
+    renderMode(); loadExistingGroupTags();
+  } catch (e) { toast('Sign-in failed: ' + (e.message || e), 'error'); }
+}
+async function getToken() {
+  try { return (await msalApp.acquireTokenSilent({ scopes: SCOPES, account })).accessToken; }
+  catch (_) { return (await msalApp.acquireTokenPopup({ scopes: SCOPES })).accessToken; }
+}
+async function liveGet(url) {
+  const t = await getToken();
+  const full = url.startsWith('http') ? url : 'https://graph.microsoft.com/v1.0' + url;
+  const r = await fetch(full, { headers: { Authorization: 'Bearer ' + t } });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || 'HTTP ' + r.status); }
+  return r.json();
+}
+async function liveBatch(requests) {
+  const t = await getToken();
+  const r = await fetch('https://graph.microsoft.com/v1.0/$batch', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + t, 'Content-Type': 'application/json' }, body: JSON.stringify({ requests })
+  });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || 'HTTP ' + r.status); }
+  return (await r.json()).responses || [];
+}
+
+// ══════════════════════════════════════════════════════════
+//  DEMO TENANT: simulated Graph with scripted outcomes
+// ══════════════════════════════════════════════════════════
+const DemoTenant = (() => {
+  const short = (Kit.config.identity?.districtShort || 'DEMO').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'DEMO';
+  const daysAgo = d => new Date(Date.now() - d * 86400000).toISOString();
+  const NEVER = '0001-01-01T00:00:00Z';
+  const tags = (MS.groupTagExamples || 'Staff-HS, 1to1-MS, Cart-ES').split(',').map(s => s.trim()).filter(Boolean);
+
+  // fake but realistic-looking hardware hash
+  function fakeHash(seed) {
+    const r = KitDemo.rng(seed), bytes = new Uint8Array(1200);
+    for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(r() * 256);
+    bytes[0] = 0x4f; bytes[1] = 0x41; bytes[2] = 0x33; // "OA3"
+    let s = ''; bytes.forEach(b => s += String.fromCharCode(b));
+    return btoa(s);
+  }
+  // CSV rows with their scripted fate (fate is only read by the simulator, never shown)
+  const SAMPLE = [
+    { serial: '5CG4021ABC', model: 'HP ProBook 440 G10',     fate: 'ok',            note: 'Clean import' },
+    { serial: 'PF3KXQ12',   model: 'Lenovo 300w Gen 4',      fate: 'ok',            note: 'Clean import' },
+    { serial: '9XK2Y73',    model: 'Dell Latitude 3450',     fate: 'ok', tag: tags[0], note: 'Clean import, tag in CSV' },
+    { serial: '5CG4021ABD', model: 'HP ProBook 440 G10',     fate: 'slow',          note: 'Takes a few status checks' },
+    { serial: 'PF3KXQ15',   model: 'Lenovo 300w Gen 4',      fate: 'already',       note: 'Already registered here' },
+    { serial: '7HT9Z81',    model: 'Dell Latitude 3450',     fate: 'otherTenant',   note: 'Owned by another tenant' },
+    { serial: 'R90QWE77',   model: 'Lenovo 300w Gen 4',      fate: 'badhash',       note: 'Damaged hash, caught before import' },
+    { serial: 'PF3KXQ12',   model: 'Lenovo 300w Gen 4',      fate: 'dupe',          note: 'Duplicate row, caught before import' },
+    { serial: '5CG4021ABE', model: 'HP ProBook 440 G10',     fate: 'throttle',      note: 'Throttled once, retried automatically' },
+    { serial: '3FZ8W44',    model: 'Dell Latitude 3450',     fate: 'syncdelay',     note: 'Long Intune sync delay' }
+  ];
+  const FATES = {}; SAMPLE.forEach(s => { if (!FATES[s.serial]) FATES[s.serial] = s; });
+
+  // devices already in the "tenant" (for tag list + readiness checks)
+  function seedDevices() {
+    return [
+      { serialNumber: '5CG3110XYZ', model: 'HP ProBook 440 G10', manufacturer: 'HP', groupTag: tags[0] || 'Staff-HS', deploymentProfileAssignmentStatus: 'assignedInSync', deploymentProfileAssignedDateTime: daysAgo(40), lastContactedDateTime: daysAgo(3), managedDeviceName: '' },
+      { serialNumber: 'PF2ABC99',   model: 'Lenovo 300w Gen 4',  manufacturer: 'LENOVO', groupTag: '', deploymentProfileAssignmentStatus: 'assignedInSync', deploymentProfileAssignedDateTime: daysAgo(90), lastContactedDateTime: daysAgo(12), managedDeviceName: '' },
+      { serialNumber: '8JK4L22',    model: 'Dell Latitude 3450', manufacturer: 'Dell Inc.', groupTag: tags[1] || '1to1-MS', deploymentProfileAssignmentStatus: 'notAssigned', deploymentProfileAssignedDateTime: NEVER, lastContactedDateTime: NEVER, managedDeviceName: '' },
+      { serialNumber: '3MN7Q01',    model: 'Dell Latitude 3450', manufacturer: 'Dell Inc.', groupTag: tags[0] || 'Staff-HS', deploymentProfileAssignmentStatus: 'assignedInSync', deploymentProfileAssignedDateTime: daysAgo(200), lastContactedDateTime: daysAgo(1), managedDeviceName: short + '-HS-LT042' },
+      { serialNumber: 'PF3KXQ15',   model: 'Lenovo 300w Gen 4',  manufacturer: 'LENOVO', groupTag: tags[1] || '1to1-MS', deploymentProfileAssignmentStatus: 'assignedInSync', deploymentProfileAssignedDateTime: daysAgo(300), lastContactedDateTime: daysAgo(70), managedDeviceName: '' },
+      { serialNumber: 'YX5521KL',   model: 'Surface Laptop SE',  manufacturer: 'Microsoft Corporation', groupTag: '', deploymentProfileAssignmentStatus: 'assignedOutOfSync', deploymentProfileAssignedDateTime: daysAgo(20), lastContactedDateTime: daysAgo(60), managedDeviceName: '' }
+    ];
+  }
+  const MANAGED = () => [{ serialNumber: '3MN7Q01', deviceName: short + '-HS-LT042', model: 'Dell Latitude 3450', manufacturer: 'Dell Inc.', operatingSystem: 'Windows', osVersion: '10.0.26100.2314' }];
+
+  let devices = seedDevices(), imports = {}, throttled = {}, nextId = 1;
+  const delay = ms => KitDemo.wait(ms);
+
+  function sampleCsv() {
+    const lines = ['Device Serial Number,Windows Product ID,Hardware Hash,Group Tag'];
+    SAMPLE.forEach(s => {
+      const hash = s.fate === 'badhash' ? fakeHash(s.serial).slice(0, 64) + '***TRUNCATED' : fakeHash(s.serial);
+      lines.push([s.serial, '', hash, s.tag || ''].join(','));
+    });
+    return lines.join('\r\n') + '\r\n';
+  }
+
+  async function get(url) {
+    await delay(500);
+    const path = url.replace('https://graph.microsoft.com/v1.0', '').split('?')[0];
+    if (path === '/deviceManagement/windowsAutopilotDeviceIdentities') return { value: devices.map(d => ({ ...d, id: 'ap-' + d.serialNumber })) };
+    if (path === '/deviceManagement/managedDevices') {
+      const m = decodeURIComponent(url).match(/serialNumber,'([^']*)'/);
+      const q = (m ? m[1] : '').toUpperCase();
+      return { value: MANAGED().filter(d => d.serialNumber.toUpperCase().includes(q)) };
+    }
+    const im = path.match(/importedWindowsAutopilotDeviceIdentities\/(.+)$/);
+    if (im) return statusOf(im[1]);
+    throw new Error('Demo tenant: unsupported request ' + path);
+  }
+
+  function statusOf(id) {
+    const rec = imports[id];
+    if (!rec) return { id, state: { deviceImportStatus: 'unknown' } };
+    rec.checks++;
+    const f = (FATES[rec.serial] || { fate: 'ok' }).fate;
+    const doneAfter = { ok: 1, throttle: 1, slow: 3, already: 2, otherTenant: 2, syncdelay: 6 }[f] || 1;
+    let st = { deviceImportStatus: 'pending' };
+    if (rec.checks >= doneAfter) {
+      if (f === 'already') st = { deviceImportStatus: 'error', deviceErrorCode: 806, deviceErrorName: 'ZtdDeviceAlreadyAssigned' };
+      else if (f === 'otherTenant') st = { deviceImportStatus: 'error', deviceErrorCode: 808, deviceErrorName: 'ZtdDeviceAssignedToOtherTenant' };
+      else {
+        st = { deviceImportStatus: 'complete' };
+        if (!devices.some(d => d.serialNumber === rec.serial)) {
+          const s = FATES[rec.serial] || {};
+          devices.push({ serialNumber: rec.serial, model: s.model || 'Unknown', manufacturer: (s.model || '').split(' ')[0], groupTag: rec.groupTag, deploymentProfileAssignmentStatus: 'pending', deploymentProfileAssignedDateTime: NEVER, lastContactedDateTime: NEVER, managedDeviceName: '', justImported: true });
+        }
+      }
+    }
+    return { id, serialNumber: rec.serial, groupTag: rec.groupTag, state: st };
+  }
+
+  async function batch(requests) {
+    await delay(900);
+    return requests.map(req => {
+      if (req.method === 'GET') {
+        const m = req.url.match(/importedWindowsAutopilotDeviceIdentities\/(.+)$/);
+        return { id: req.id, status: 200, body: statusOf(m ? m[1] : '') };
+      }
+      const serial = (req.body.serialNumber || '').toUpperCase();
+      const f = (FATES[serial] || { fate: 'ok' }).fate;
+      if (f === 'throttle' && !throttled[serial]) { throttled[serial] = true; return { id: req.id, status: 429, body: { error: { message: 'Too many requests' } } }; }
+      const id = 'demo-import-' + (nextId++);
+      imports[id] = { serial, groupTag: req.body.groupTag, checks: 0 };
+      return { id: req.id, status: 201, body: { id, serialNumber: serial, state: { deviceImportStatus: 'pending' } } };
+    });
+  }
+
+  function reset() { devices = seedDevices(); imports = {}; throttled = {}; nextId = 1; }
+
+  const CHECK_SAMPLES = [
+    { serial: '5CG3110XYZ', hint: 'Ready' },
+    { serial: 'PF2ABC99', hint: 'Missing group tag' },
+    { serial: '8JK4L22', hint: 'No profile, never checked in' },
+    { serial: short + '-HS-LT042', hint: 'Already enrolled (by name)' },
+    { serial: 'YX5521KL', hint: 'Stale check-in, no tag' },
+    { serial: 'ZZ0000NOPE', hint: 'Not in Autopilot' }
+  ];
+  return { get, batch, reset, sampleCsv, SAMPLE, CHECK_SAMPLES };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  MODE UI
+// ══════════════════════════════════════════════════════════
+function renderMode() {
+  const chip = document.getElementById('modeChip'), txt = document.getElementById('modeText');
+  chip.className = 'mode-chip mode-' + MODE;
+  const n = document.getElementById('noticeArea');
+  if (MODE === 'demo') {
+    txt.textContent = 'Demo';
+    n.innerHTML = '';
+  } else if (MODE === 'live') {
+    txt.textContent = account ? (account.name || account.username) : 'Not signed in';
+    n.innerHTML = account ? '' : `<div class="notice"><div class="ic">&#128273;</div><div class="tx"><b>Sign in to ${esc(Kit.config.identity.districtShort)}’s Microsoft 365</b>You can check CSVs without signing in; importing and readiness checks need an Intune admin account.</div><div class="acts"><button class="tt-btn tt-btn--primary" type="button" onclick="signIn()">Sign in with Microsoft</button></div></div>`;
+  } else {
+    txt.textContent = 'Offline';
+    n.innerHTML = `<div class="notice"><div class="ic">&#128268;</div><div class="tx"><b>Offline mode</b>CSV checking and the clean-CSV download work now. To import and run readiness checks directly, add your app registration in <a href="${Kit.url('setup.html')}" style="color:var(--brand-pale)">Kit Setup</a>, or try everything with sample data.</div><div class="acts"><button class="tt-btn tt-btn--secondary" type="button" onclick="KitDemo.enter()">Try with sample data</button></div></div>`;
+  }
+  const canImport = MODE === 'demo' || (MODE === 'live' && account);
+  document.getElementById('importBtn').style.display = canImport ? '' : 'none';
+  document.getElementById('importNote').textContent = canImport ? '' : 'Upload the clean CSV in Intune: Devices › Enrollment › Windows Autopilot › Devices › Import.';
+  renderPreview();
+}
+
+// ══════════════════════════════════════════════════════════
+//  GROUP TAGS
+// ══════════════════════════════════════════════════════════
+async function loadExistingGroupTags() {
+  const msgEl = document.getElementById('tagLoadingMsg');
+  const list = document.getElementById('groupTagList');
+  const examples = (MS.groupTagExamples || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (MODE === 'offline' || (MODE === 'live' && !account)) {
+    list.innerHTML = examples.map(t => `<option value="${esc(t)}"></option>`).join('');
+    msgEl.textContent = '';
+    return;
+  }
+  msgEl.textContent = 'Loading existing tags…';
+  try {
+    const tags = new Set();
+    // The Autopilot endpoint 500s on $select+$top combos, so fetch full objects and follow nextLink
+    let url = '/deviceManagement/windowsAutopilotDeviceIdentities';
+    while (url) {
+      const data = await Graph.get(url);
+      (data.value || []).forEach(d => { if (d.groupTag) tags.add(d.groupTag); });
+      url = data['@odata.nextLink'] || null;
+    }
+    list.innerHTML = [...tags].sort().map(t => `<option value="${esc(t)}"></option>`).join('');
+    msgEl.textContent = tags.size ? `${tags.size} existing tag(s) loaded` : 'No existing tags. Type a new one.';
+  } catch (e) {
+    msgEl.innerHTML = 'Couldn’t load existing tags: ' + esc(e.message) + ' <a href="#" onclick="event.preventDefault();loadExistingGroupTags()" style="color:var(--brand-pale)">Retry</a>';
+  }
+}
+function applyTagToAll() {
+  const val = document.getElementById('batchTagInput').value.trim();
+  if (!val) { toast('Type a group tag first', 'error'); return; }
+  rows.filter(r => r.status === 'ready').forEach(r => r.groupTag = val);
+  renderPreview();
+  toast(`Applied "${val}" to ${rows.filter(r => r.status === 'ready').length} row(s)`, 'info');
+}
+
+// ══════════════════════════════════════════════════════════
+//  CSV: parse + validate
+// ══════════════════════════════════════════════════════════
+(function wireDrop() {
+  const zone = document.getElementById('dropzone'), input = document.getElementById('fileInput');
+  zone.addEventListener('click', () => input.click());
+  zone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  ['dragenter', 'dragover'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add('dragover'); }));
+  ['dragleave', 'drop'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove('dragover'); }));
+  zone.addEventListener('drop', e => { if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+  input.addEventListener('change', () => { if (input.files.length) handleFile(input.files[0]); });
+  document.getElementById('sampleLink').onclick = () => KitDemo.download('autopilot-sample-hashes.csv', DemoTenant.sampleCsv(), 'text/csv');
+})();
+
+function handleFile(file) {
+  fileName = file.name;
+  const reader = new FileReader();
+  reader.onload = e => loadCsvText(e.target.result, file.name);
+  reader.readAsText(file);
+}
+function loadCsvText(text, name) {
+  try {
+    const parsed = parseCSV(text);
+    if (!parsed.length) { toast('No device rows found in that CSV', 'error'); return; }
+    rows = parsed; fileName = name;
+    stopPolling();
+    document.getElementById('resultsCard').style.display = 'none';
+    document.getElementById('fileChipWrap').style.display = 'block';
+    document.getElementById('dropzoneWrap').style.display = 'none';
+    document.getElementById('fileChipName').textContent = name;
+    const bad = rows.filter(r => r.status === 'invalid').length;
+    document.getElementById('fileChipCount').textContent = `${rows.length} row(s)` + (bad ? `, ${bad} need attention` : ', all valid');
+    renderPreview();
+    toast(bad ? `${rows.length - bad} ready, ${bad} flagged` : `${rows.length} device(s) ready`, bad ? 'info' : 'success');
+  } catch (err) { toast('Couldn’t read that CSV: ' + err.message, 'error'); }
+}
+function clearFile() {
+  rows = []; fileName = '';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileChipWrap').style.display = 'none';
+  document.getElementById('dropzoneWrap').style.display = 'block';
+  document.getElementById('resultsCard').style.display = 'none';
+  stopPolling(); renderPreview();
+}
+
+const B64 = /^[A-Za-z0-9+/]+={0,2}$/;
+function validateHash(h) {
+  if (!h) return 'Missing hardware hash';
+  if (h.length < 200) return 'Hash is too short (truncated?)';
+  if (!B64.test(h) || h.length % 4 !== 0) return 'Hash isn’t valid base64 (damaged or edited?)';
+  try { atob(h.slice(0, 400)); } catch (e) { return 'Hash can’t be decoded'; }
+  return null;
+}
+function parseCSV(text) {
+  text = text.replace(/^﻿/, '').trim();
+  if (!text) return [];
+  const lines = splitCSVLines(text);
+  if (!lines.length) return [];
+  const head = lines[0].map(c => c.trim().toLowerCase());
+  const isHeader = head.some(c => /serial|hash|hardware|tag/.test(c));
+  let sI = 0, pI = 1, hI = 2, tI = -1, data = lines;
+  if (isHeader) {
+    sI = head.findIndex(c => /serial/.test(c)); if (sI < 0) sI = 0;
+    hI = head.findIndex(c => /hash|identifier/.test(c)); if (hI < 0) hI = 2;
+    pI = head.findIndex(c => /product\s*id/.test(c));
+    tI = head.findIndex(c => /group\s*tag|grouptag/.test(c));
+    data = lines.slice(1);
+  }
+  const out = [], seenSerial = {}, seenHash = {};
+  data.forEach(cells => {
+    if (!cells.length || cells.every(c => !c.trim())) return;
+    const serial = (cells[sI] || '').trim().toUpperCase();
+    const hash = (cells[hI] || '').trim().replace(/\s+/g, '');
+    const row = { serial: serial || '(no serial)', hash, pkid: pI >= 0 ? (cells[pI] || '').trim() : '', groupTag: tI >= 0 ? (cells[tI] || '').trim() : '', status: 'ready', importId: null, error: null, issues: [] };
+    const hErr = validateHash(hash);
+    if (hErr) row.issues.push(hErr);
+    if (!serial) row.issues.push('Missing serial number');
+    if (serial && seenSerial[serial]) row.issues.push(`Duplicate of row ${seenSerial[serial]} (same serial)`);
+    else if (hash && seenHash[hash]) row.issues.push(`Duplicate of row ${seenHash[hash]} (same hash)`);
+    if (row.issues.length) row.status = 'invalid';
+    const n = out.length + 1;
+    if (serial && !seenSerial[serial]) seenSerial[serial] = n;
+    if (hash && !seenHash[hash]) seenHash[hash] = n;
+    out.push(row);
+  });
+  return out;
+}
+function splitCSVLines(text) {
+  const out = []; let row = [], field = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], nx = text[i + 1];
+    if (q) { if (c === '"' && nx === '"') { field += '"'; i++; } else if (c === '"') q = false; else field += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\r') {}
+    else if (c === '\n') { row.push(field); out.push(row); row = []; field = ''; }
+    else field += c;
+  }
+  if (field.length || row.length) { row.push(field); out.push(row); }
+  return out.filter(r => r.length && !(r.length === 1 && r[0] === ''));
+}
+
+function renderPreview() {
+  const valid = rows.filter(r => r.status === 'ready');
+  document.getElementById('rowCount').textContent = rows.length ? `${valid.length} ready` + (rows.length - valid.length ? ` · ${rows.length - valid.length} flagged` : '') : '';
+  document.getElementById('importBtn').disabled = !valid.length;
+  document.getElementById('exportBtn').disabled = !valid.length;
+  document.getElementById('clearAllBtn').disabled = !rows.length;
+  const wrap = document.getElementById('previewTableArea');
+  if (!rows.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">&#128450;</div><div class="empty-title">No CSV loaded yet</div><div class="empty-sub">Upload a hardware hash file above to check and preview devices here.</div></div>`;
+    return;
+  }
+  wrap.innerHTML = `<table><thead><tr><th>#</th><th>Serial number</th><th>Hardware hash</th><th>Group tag</th><th>Check</th><th></th></tr></thead><tbody>${rows.map((r, i) => `
+    <tr class="${r.status === 'invalid' ? 'invalid' : ''}">
+      <td>${i + 1}</td>
+      <td class="row-serial">${esc(r.serial)}</td>
+      <td><span class="mono-hash" title="${esc(r.hash.slice(0, 200))}">${esc(r.hash.slice(0, 36))}${r.hash.length > 36 ? '…' : ''}</span></td>
+      <td>${r.status === 'invalid' ? '<span style="color:var(--text-muted)">—</span>' : `<input class="row-tag-input" value="${esc(r.groupTag)}" placeholder="none" aria-label="Group tag for ${esc(r.serial)}" onchange="rows[${i}].groupTag=this.value.trim()">`}</td>
+      <td>${r.status === 'invalid' ? `<span class="badge b-red"><span class="b-dot"></span>Skip</span><span class="detail" style="display:block;margin-top:4px;color:var(--color-error)">${esc(r.issues.join('; '))}</span>` : '<span class="badge b-green"><span class="b-dot"></span>OK</span>'}</td>
+      <td><button class="row-remove" type="button" title="Remove row" aria-label="Remove row ${i + 1}" onclick="removeRow(${i})">&#10005;</button></td>
+    </tr>`).join('')}</tbody></table>`;
+}
+function removeRow(i) { rows.splice(i, 1); if (!rows.length) clearFile(); else renderPreview(); }
+
+function exportCsv() {
+  const ok = rows.filter(r => r.status === 'ready');
+  const lines = ['Device Serial Number,Windows Product ID,Hardware Hash,Group Tag'];
+  ok.forEach(r => lines.push([r.serial === '(no serial)' ? '' : r.serial, r.pkid, r.hash, r.groupTag].map(v => /[",]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v).join(',')));
+  KitDemo.download((fileName || 'autopilot').replace(/\.csv$/i, '') + '-clean.csv', lines.join('\r\n') + '\r\n', 'text/csv');
+  toast(`Downloaded ${ok.length} clean row(s)`, 'success');
+}
+
+// ══════════════════════════════════════════════════════════
+//  IMPORT
+// ══════════════════════════════════════════════════════════
+const chunk = (a, n) => { const o = []; for (let i = 0; i < a.length; i += n) o.push(a.slice(i, i + n)); return o; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function importAll() {
+  const todo = rows.filter(r => r.status === 'ready' || r.status === 'error');
+  if (!todo.length) { toast('Nothing to import', 'error'); return; }
+  const btn = document.getElementById('importBtn');
+  btn.disabled = true; btn.textContent = 'Importing…';
+  document.getElementById('resultsCard').style.display = 'block';
+  todo.forEach(r => { r.status = 'submitting'; r.error = null; r.errorCode = null; });
+  renderResults();
+  for (const b of chunk(todo, BATCH_SIZE)) { await submitBatch(b); renderResults(); await sleep(400); }
+  btn.textContent = '↑ Import to Autopilot'; btn.disabled = false;
+  toast('Import submitted. Checking status…', 'info');
+  pollAttempts = 0; startPolling();
+}
+async function submitBatch(batch, retry = 0) {
+  const requests = batch.map((r, i) => ({
+    id: String(i), method: 'POST', url: '/deviceManagement/importedWindowsAutopilotDeviceIdentities',
+    headers: { 'Content-Type': 'application/json' },
+    body: { orderIdentifier: '', serialNumber: r.serial === '(no serial)' ? '' : r.serial, hardwareIdentifier: r.hash, groupTag: r.groupTag || '' }
+  }));
+  try {
+    const responses = await Graph.batch(requests);
+    const again = [];
+    responses.forEach(resp => {
+      const row = batch[parseInt(resp.id, 10)]; if (!row) return;
+      if (resp.status === 429 || resp.status === 503) { again.push(row); row.retrying = true; }
+      else if (resp.status >= 200 && resp.status < 300) { row.status = 'pending'; row.importId = resp.body?.id || null; row.retried = !!row.retrying; }
+      else { row.status = 'error'; row.error = resp.body?.error?.message || 'HTTP ' + resp.status; }
+    });
+    if (again.length && retry < 3) {
+      renderResults();
+      await (MODE === 'demo' ? KitDemo.wait(2500) : sleep(3000 * (retry + 1)));
+      await submitBatch(again, retry + 1);
+    } else again.forEach(r => { r.status = 'error'; r.errorCode = 'Throttled'; r.error = 'Throttled by Microsoft Graph'; });
+  } catch (e) { batch.forEach(r => { r.status = 'error'; r.error = e.message || 'Batch request failed'; }); }
+}
+
+function startPolling() {
+  stopPolling();
+  const ms = MODE === 'demo' ? KitDemo.scale(POLL_MS) : POLL_MS;
+  setPollNote(true, ms);
+  pollTimer = setInterval(async () => {
+    pollAttempts++;
+    await checkStatus(true);
+    if (!rows.some(r => r.status === 'pending') || pollAttempts >= MAX_POLL_ATTEMPTS) stopPolling();
+  }, ms);
+}
+function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } setPollNote(false); }
+function setPollNote(on, ms) {
+  const n = document.getElementById('pollNote'); if (!n) return;
+  n.innerHTML = on ? `<span class="tt-spinner" style="width:12px;height:12px;border-width:2px"></span> Auto-checking every ${Math.round(ms / 1000)}s` : (rows.some(r => r.status === 'pending') ? 'Auto-check stopped. Intune can take up to 15 minutes; use Refresh.' : '');
+}
+
+async function checkStatus(silent) {
+  const pend = rows.filter(r => r.status === 'pending' && r.importId);
+  if (!pend.length) { if (!silent) toast('No pending imports to check', 'info'); return; }
+  const btn = document.getElementById('refreshStatusBtn');
+  btn.disabled = true; btn.textContent = '↻ Checking…';
+  for (const b of chunk(pend, BATCH_SIZE)) {
+    try {
+      const responses = await Graph.batch(b.map((r, i) => ({ id: String(i), method: 'GET', url: `/deviceManagement/importedWindowsAutopilotDeviceIdentities/${r.importId}` })));
+      responses.forEach(resp => {
+        const row = b[parseInt(resp.id, 10)]; if (!row || resp.status !== 200) return;
+        const st = resp.body?.state;
+        row.checks = (row.checks || 0) + 1;
+        if (st?.deviceImportStatus === 'complete') { row.status = 'complete'; row.error = null; }
+        else if (st?.deviceImportStatus === 'error') { row.status = 'error'; row.errorCode = st.deviceErrorName; row.error = st.deviceErrorName || 'Import error'; }
+      });
+    } catch (e) { console.error('status check failed', e); }
+  }
+  renderResults();
+  btn.disabled = false; btn.textContent = '↻ Refresh status';
+}
+
+function renderResults() {
+  const sub = rows.filter(r => ['submitting', 'pending', 'complete', 'error'].includes(r.status));
+  const c = s => sub.filter(r => r.status === s).length;
+  const skipped = rows.filter(r => r.status === 'invalid').length;
+  document.getElementById('summaryStrip').innerHTML = `
+    <div class="sum-item"><strong>${sub.length}</strong>submitted</div>
+    <div class="sum-item"><strong style="color:var(--color-success)">${c('complete')}</strong>complete</div>
+    <div class="sum-item"><strong style="color:var(--color-warning)">${c('pending') + c('submitting')}</strong>pending</div>
+    <div class="sum-item"><strong style="color:var(--color-error)">${c('error')}</strong>error</div>
+    ${skipped ? `<div class="sum-item"><strong style="color:var(--text-muted)">${skipped}</strong>skipped by checks</div>` : ''}`;
+  const badge = r => r.status === 'complete' ? '<span class="badge b-green"><span class="b-dot"></span>Complete</span>'
+    : r.status === 'pending' ? '<span class="badge b-yellow"><span class="b-dot"></span>Pending</span>'
+    : r.status === 'submitting' ? `<span class="badge b-blue"><span class="b-dot"></span>${r.retrying ? 'Retrying' : 'Submitting'}</span>`
+    : '<span class="badge b-red"><span class="b-dot"></span>Error</span>';
+  const detail = r => {
+    if (r.status === 'error') return `<span class="detail" style="color:var(--color-error)">${esc(r.error)}${ERROR_HELP[r.errorCode] ? `<span class="why">${esc(ERROR_HELP[r.errorCode])}</span>` : ''}</span>`;
+    if (r.status === 'complete') return `<span class="detail">Registered to Autopilot${r.retried ? '<span class="why">Throttled once, retried automatically</span>' : ''}<span class="why">Profile assignment usually follows within 5–15 minutes.</span></span>`;
+    if (r.status === 'pending') return `<span class="detail" style="color:var(--text-muted)">Processing in Intune${(r.checks || 0) >= 3 ? '<span class="why">Still going. Large or busy tenants can take up to 15 minutes.</span>' : ''}${r.retried ? '<span class="why">Throttled once, retried automatically</span>' : ''}</span>`;
+    return '<span class="detail" style="color:var(--text-muted)">—</span>';
+  };
+  document.getElementById('resultsTableArea').innerHTML = `<table><thead><tr><th>Serial number</th><th>Group tag</th><th>Status</th><th>Detail</th></tr></thead><tbody>${sub.map(r => `
+    <tr><td class="row-serial">${esc(r.serial)}</td><td>${esc(r.groupTag || '—')}</td><td>${badge(r)}</td><td>${detail(r)}</td></tr>`).join('')}</tbody></table>`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  READINESS CHECK
+// ══════════════════════════════════════════════════════════
+let apCache = null;
+const normSerial = s => (s || '').replace(/[^a-z0-9]/gi, '').toUpperCase();
+
+async function apCheck(prefill) {
+  const input = document.getElementById('apSearchInput');
+  if (prefill) input.value = prefill;
+  const q = input.value.trim();
+  if (!q) { input.focus(); return; }
+  const out = document.getElementById('apResults'), btn = document.getElementById('apBtn');
+  if (MODE === 'offline' || (MODE === 'live' && !account)) {
+    out.innerHTML = `<div class="ap-next">${MODE === 'offline' ? 'Readiness checks read from Intune, so they need your app registration (Kit Setup) or demo mode.' : 'Sign in first (button at the top of the page).'}${MODE === 'offline' ? ' <button class="sample-link" type="button" onclick="KitDemo.enter()">Try with sample data</button>' : ''}</div>`;
+    return;
+  }
+  btn.disabled = true; btn.textContent = '…';
+  out.innerHTML = '<div class="ap-loading">Scanning Autopilot devices…</div>';
+  try {
+    const nq = normSerial(q);
+    const match = d => normSerial(d.serialNumber) === nq || (d.managedDeviceName || '').toLowerCase() === q.toLowerCase();
+    // Graph 500s on $filter=serialNumber here, so scan everything (cached) and match client-side
+    if (!apCache || MODE === 'demo') {
+      apCache = [];
+      let url = '/deviceManagement/windowsAutopilotDeviceIdentities?$top=999', pages = 0;
+      while (url && pages++ < 200) { const d = await Graph.get(url); apCache.push(...(d.value || [])); url = d['@odata.nextLink'] || null; }
+    }
+    const ap = apCache.find(match) || null;
+    let md = null;
+    try {
+      const serialForMd = ap ? ap.serialNumber : q;
+      const d = await Graph.get(`/deviceManagement/managedDevices?$filter=contains(serialNumber,'${encodeURIComponent(serialForMd.replace(/'/g, ''))}')&$top=5`);
+      md = (d.value || []).find(x => normSerial(x.serialNumber) === normSerial(serialForMd)) || null;
+    } catch (_) {}
+    out.innerHTML = renderReadiness(ap, md, q);
+  } catch (e) { out.innerHTML = `<div class="ap-error">&#9888; ${esc(e.message || 'Check failed')}</div>`; }
+  btn.disabled = false; btn.textContent = 'Check';
+}
+document.getElementById('apSearchInput').addEventListener('keydown', e => { if (e.key === 'Enter') apCheck(); });
+
+function renderReadiness(ap, md, q) {
+  let score = 0; const checks = [], next = [];
+  if (ap) { score += 30; checks.push([true, 'Autopilot registered', 'Serial: ' + ap.serialNumber]); }
+  else { checks.push([false, 'Not in Autopilot', 'No Autopilot record for this serial']); next.push('Import the hardware hash on the Import tab.'); }
+  // Note: "notAssigned" contains "assigned", so match on the start of the status, not includes()
+  const pst = (ap && ap.deploymentProfileAssignmentStatus || '').toLowerCase();
+  if (pst.startsWith('assigned')) { score += 35; checks.push([true, 'Deployment profile assigned', ap.deploymentProfileAssignmentStatus]); }
+  else {
+    checks.push([false, 'No deployment profile', ap ? (ap.deploymentProfileAssignmentStatus || 'notAssigned') : 'N/A']);
+    if (ap) next.push(pst === 'pending' ? 'Profile assignment is pending. This usually finishes 5–15 minutes after import.' : 'Make sure the device’s group tag puts it in a group that has an Autopilot profile assigned.');
+  }
+  if (ap && (ap.groupTag || '').trim()) { score += 15; checks.push([true, 'Group tag set', ap.groupTag]); }
+  else { checks.push([false, 'No group tag', 'Group tag is empty']); if (ap) next.push('Set a group tag (re-import with a tag, or edit it in Intune).'); }
+  const last = ap && ap.lastContactedDateTime, never = !last || last.startsWith('0001');
+  if (!never) {
+    const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+    if (days <= 45) { score += 10; checks.push([true, 'Recently contacted', days + ' day' + (days === 1 ? '' : 's') + ' ago']); }
+    else { checks.push([false, 'Last contact is stale', days + ' days ago (more than 45)']); next.push('Power it on and connect to the internet so it checks in.'); }
+  } else checks.push([false, 'Never contacted', 'No Autopilot check-in recorded yet']);
+  if (!md) { score += 10; checks.push([true, 'Not currently enrolled', 'Clean slate for Autopilot OOBE']); }
+  else { score += 5; checks.push(['warn', 'Already enrolled in Intune', md.deviceName || md.id]); next.push('It’s already enrolled. Reset it (Autopilot Reset or wipe) if you want it to go through OOBE again.'); }
+
+  const [tier, label] = score >= 90 ? ['ready', '✓ Ready'] : score >= 65 ? ['warn', '~ Mostly ready'] : score >= 30 ? ['caution', '⚠ Needs attention'] : ['fail', '✗ Not ready'];
+  const dt = v => v && !String(v).startsWith('0001') ? new Date(v).toLocaleDateString() : 'Never';
+  const row = (l, v, hi) => `<div class="ap-info-row"><span class="ap-info-label">${l}</span><span class="ap-info-val${hi ? ' ap-info-val--hi' : ''}">${esc(v || '—')}</span></div>`;
+  return `<div class="ap-panels">
+    <div class="ap-panel"><div class="ap-panel__title">Device identity</div>
+      ${row('Serial', ap ? ap.serialNumber : (md ? md.serialNumber : q), true)}
+      ${row('Model', (ap && ap.model) || (md && md.model))}
+      ${row('Manufacturer', (ap && ap.manufacturer) || (md && md.manufacturer))}
+      ${row('Group tag', ap && ap.groupTag)}
+      ${row('Profile', ap && ap.deploymentProfileAssignmentStatus)}
+      ${row('Assigned', ap ? dt(ap.deploymentProfileAssignedDateTime) : '')}
+      ${row('Last contact', ap ? dt(ap.lastContactedDateTime) : '')}
+      ${row('Intune name', md && md.deviceName)}
+      ${row('OS', md ? (md.operatingSystem + ' ' + (md.osVersion || '')) : '')}
+    </div>
+    <div class="ap-panel ap-score--${tier}"><div class="ap-panel__title">Readiness score</div>
+      <div class="ap-score-wrap"><div class="ap-score-num">${score}</div><div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">out of 100</div><div class="ap-score-label">${label}</div></div></div>
+      <div class="ap-score-bar-wrap"><div class="ap-score-bar" style="width:${score}%"></div></div>
+      ${checks.map(([p, t, d]) => `<div class="ap-check"><span class="ap-check__icon">${p === true ? '✅' : p === 'warn' ? '⚠️' : '❌'}</span><div><div class="ap-check__title">${esc(t)}</div><div class="ap-check__detail">${esc(d)}</div></div></div>`).join('')}
+      ${next.length ? `<div class="ap-next"><b>Next steps</b><br>${next.map(esc).join('<br>')}</div>` : ''}
+    </div></div>`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  TABS, HELP, UTIL
+// ══════════════════════════════════════════════════════════
+document.querySelector('.tabs').addEventListener('click', e => {
+  const t = e.target.closest('.tab'); if (!t) return;
+  showTab(t.dataset.tab);
+});
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(b => { const on = b.dataset.tab === name; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+}
+function openHelp() {
+  document.getElementById('helpMode').textContent = MODE === 'demo' ? 'You’re in demo mode: the tenant is simulated and every result is scripted, so it behaves the same every time.'
+    : MODE === 'live' ? 'Connected to ' + (Kit.config.identity.districtName) + '’s Microsoft 365. Imports are real.'
+    : 'Offline mode: CSV checks and clean-CSV download work without signing in.';
+  document.getElementById('helpOverlay').classList.add('open');
+}
+function closeHelp() { document.getElementById('helpOverlay').classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHelp(); });
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function toast(msg, type) {
+  const el = document.createElement('div');
+  el.className = 'toast t-' + (type || 'info'); el.textContent = msg;
+  document.getElementById('toastArea').appendChild(el);
+  setTimeout(() => el.remove(), 4500);
+}
+
+// ══════════════════════════════════════════════════════════
+//  PRESENTER PANEL (demo only)
+// ══════════════════════════════════════════════════════════
+if (MODE === 'demo') {
+  KitDemo.panel({
+    sections: [
+      { title: 'Import', actions: [
+        { label: '▶ Load sample CSV (10 devices)', onClick: () => { showTab('import'); loadCsvText(DemoTenant.sampleCsv(), 'sample-hashes.csv'); } },
+        { label: '⇩ Download sample CSV', onClick: () => KitDemo.download('autopilot-sample-hashes.csv', DemoTenant.sampleCsv(), 'text/csv') }
+      ] },
+      { title: 'Readiness check', chips: DemoTenant.CHECK_SAMPLES.map(s => ({ label: s.serial, hint: s.hint, onClick: () => { showTab('check'); apCheck(s.serial); } })) }
+    ],
+    onReset: () => { DemoTenant.reset(); apCache = null; clearFile(); document.getElementById('apResults').innerHTML = ''; document.getElementById('apSearchInput').value = ''; document.getElementById('batchTagInput').value = ''; loadExistingGroupTags(); showTab('import'); toast('Demo reset', 'info'); }
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════════
+(async function boot() {
+  if (MODE === 'live') {
+    try { await initMsal(); }
+    catch (e) { toast('Microsoft sign-in couldn’t start: ' + e.message, 'error'); }
+  }
+  renderMode();
+  loadExistingGroupTags();
+  if (location.hash === '#check') showTab('check');
+})();
+</script>
+</body>
+</html>

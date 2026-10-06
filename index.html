@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{portalName}} · {{districtShort}}</title>
+<link rel="stylesheet" href="assets/kit-theme-dark.css">
+<script src="kit-config.js"></script>
+<script src="kit-brand.js"></script>
+<script src="kit-demo.js"></script>
+<style>
+  :root { --nav-w: 56px; }
+  /* full-height app; banners (setup / demo) take their own row so nothing gets pushed off-screen */
+  html, body { height: 100%; }
+  body { overflow: hidden; display: flex; flex-direction: column; }
+  .tt-app { flex: 1; min-height: 0 !important; display: flex; flex-direction: column; }
+
+  /* ── shell: icon rail + main ── */
+  .shell { display: flex; flex: 1; min-height: 0; position: relative; z-index: 1; }
+  .rail { width: var(--nav-w); flex-shrink: 0; background: rgba(var(--bg-deep-rgb), .92); border-right: 1px solid var(--border-glass); display: flex; flex-direction: column; align-items: center; padding: 10px 0 8px; gap: 4px; }
+  .rail-logo { width: 36px; height: 36px; border-radius: 9px; background: var(--brand); display: grid; place-items: center; margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow-blue); }
+  .rail-logo img { width: 30px; height: 30px; object-fit: contain; }
+  .rail-item { width: 40px; height: 36px; border-radius: 9px; display: grid; place-items: center; color: var(--text-muted); text-decoration: none; position: relative; transition: background .15s; border: 0; background: none; cursor: pointer; }
+  .rail-item:hover, .rail-item:focus-visible { background: rgba(255,255,255,.07); outline: none; }
+  .rail-item.active { background: rgba(var(--brand-pale-rgb), .18); }
+  .rail-item svg { width: 18px; height: 18px; }
+  .rail-item[data-tip]:hover::after, .rail-item[data-tip]:focus-visible::after { content: attr(data-tip); position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%); background: var(--glass-modal); border: 1px solid var(--border-glass-bright); border-radius: 6px; padding: 4px 10px; font: 600 11px var(--font-ui); color: var(--text-primary); white-space: nowrap; z-index: 50; pointer-events: none; }
+  .rail-sep { width: 28px; height: 1px; background: var(--border-glass); margin: 4px 0; }
+  .rail-spacer { flex: 1; }
+
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topbar { flex-shrink: 0; height: 54px; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: var(--glass-header); backdrop-filter: var(--blur-header); border-bottom: 2px solid; border-image: linear-gradient(90deg, var(--brand-pale), var(--accent)) 1; }
+  .tb-title { font-size: 14px; font-weight: 700; color: var(--text-primary); white-space: nowrap; line-height: 1.2; }
+  .tb-sub { font-size: 10.5px; color: var(--text-muted); white-space: nowrap; }
+  .tb-div { width: 1px; height: 24px; background: var(--border-glass-bright); flex-shrink: 0; }
+  .tb-search { flex: 1; max-width: 420px; position: relative; }
+  .tb-search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+  .tb-search input { width: 100%; padding: 7px 10px 7px 32px; background: rgba(255,255,255,.05); border: 1px solid var(--border-glass); border-radius: 8px; color: var(--text-primary); font: 12.5px var(--font-ui); outline: none; }
+  .tb-search input:focus { border-color: var(--border-glass-focus); }
+  .tb-spacer { flex: 1; }
+  .tb-clock { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .tb-badge { font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 3px 9px; border-radius: 6px; white-space: nowrap; border: 1px solid; }
+  .tb-badge.demo { color: var(--color-warning); border-color: rgba(251,191,36,.35); background: var(--color-warning-bg); }
+  .tb-badge.kit { color: var(--brand-pale); border-color: rgba(var(--brand-pale-rgb), .35); background: rgba(var(--brand-pale-rgb), .1); }
+
+  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; }
+  .content { max-width: 1240px; margin: 0 auto; padding: 22px 24px 40px; }
+
+  /* ── hero ── */
+  .hero { display: flex; gap: 20px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 4px; }
+  .hero h1 { font-size: 1.55rem; line-height: 1.2; }
+  .hero p { color: var(--text-secondary); font-size: 13.5px; max-width: 64ch; margin-top: 6px; line-height: 1.6; }
+  .hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ── widgets ── */
+  .widgets { display: flex; gap: 12px; flex-wrap: wrap; padding: 20px 0 6px; }
+  .widget { position: relative; overflow: hidden; flex: 1; min-width: 150px; background: var(--glass-panel); border: 1px solid var(--border-glass); border-radius: 12px; padding: 14px 18px 14px 22px; backdrop-filter: var(--blur-panel); }
+  .widget::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--wc, var(--brand-pale)); }
+  .widget .l { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 6px; }
+  .widget .v { font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+  .widget .s { font-size: 11px; color: var(--text-secondary); margin-top: 5px; }
+
+  /* ── sections ── */
+  .section { margin: 34px 0 16px; display: flex; align-items: center; gap: 12px; }
+  .section .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+  .section .label .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sc); }
+  .section .line { flex: 1; height: 1px; background: var(--border-glass); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 18px; }
+  .card { --cc: var(--brand-pale); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 12px; padding: 22px; border-radius: 14px; text-decoration: none; color: inherit; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09); transition: all .2s ease; }
+  .card::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, color-mix(in srgb, var(--cc) 12%, transparent) 0%, transparent 60%); opacity: 0; transition: opacity .2s; pointer-events: none; }
+  a.card:hover, a.card:focus-visible { border-color: color-mix(in srgb, var(--cc) 55%, transparent); background: color-mix(in srgb, var(--cc) 7%, transparent); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,.3); outline: none; }
+  a.card:hover::before, a.card:focus-visible::before { opacity: 1; }
+  .card-head { display: flex; align-items: center; gap: 14px; }
+  .card-icon { width: 50px; height: 50px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; background: color-mix(in srgb, var(--cc) 12%, transparent); color: var(--cc); }
+  .card-icon svg { width: 26px; height: 26px; }
+  .card-title { font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.25; }
+  .card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; flex: 1; }
+  .card-foot { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+  .card-ver { font: 11px var(--font-mono); color: var(--text-muted); }
+  .card-arrow { margin-left: auto; color: var(--cc); opacity: 0; transition: opacity .2s, transform .2s; font-size: 16px; }
+  a.card:hover .card-arrow, a.card:focus-visible .card-arrow { opacity: 1; transform: translateX(4px); }
+  .pill { font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid; }
+  .pill.green { color: var(--color-success); border-color: rgba(52,211,115,.3); background: var(--color-success-bg); }
+  .pill.amber { color: var(--color-warning); border-color: rgba(251,191,36,.3); background: var(--color-warning-bg); }
+  .pill.blue { color: var(--brand-pale); border-color: rgba(var(--brand-pale-rgb), .3); background: rgba(var(--brand-pale-rgb), .1); }
+  .card.hidden-by-search, .section.hidden-by-search { display: none; }
+  .no-results { display: none; color: var(--text-muted); font-size: 13px; padding: 30px 0; text-align: center; }
+
+  .about { margin-top: 34px; padding: 18px 20px; border-radius: 12px; border: 1px solid var(--border-glass); background: var(--glass-panel); font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+  .about b { color: var(--text-primary); }
+  .foot { margin-top: 28px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-muted); }
+
+  @media (max-width: 760px) {
+    .rail { display: none; }
+    .tb-clock, .tb-div, .tb-sub { display: none; }
+    .topbar { padding: 0 12px; }
+    .content { padding: 18px 16px 32px; }
+    .widget { min-width: calc(50% - 6px); }
+  }
+</style>
+</head>
+<body>
+<div class="tt-app">
+<div class="shell">
+
+  <nav class="rail" aria-label="Sections">
+    <div class="rail-logo"><img data-kit-logo src="assets/kit-logo.svg" alt="{{districtShort}}"></div>
+    <a class="rail-item" href="#intune" data-tip="Intune &amp; Endpoint" aria-label="Intune and Endpoint" style="color:#e67e22">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </a>
+    <a class="rail-item" href="#kit" data-tip="Take-Home Kit" aria-label="Take-home kit" style="color:#1abc9c">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </a>
+    <a class="rail-item" href="#guides" data-tip="Setup Guides" aria-label="Setup guides" style="color:#3498db">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    </a>
+    <div class="rail-sep"></div>
+    <a class="rail-item" href="setup.html" data-tip="Kit Setup" aria-label="Kit setup" style="color:var(--text-secondary)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </a>
+    <div class="rail-spacer"></div>
+    <a class="rail-item" href="#about" data-tip="About this kit" aria-label="About" style="color:var(--text-muted)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    </a>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <div><div class="tb-title">{{portalName}} Portal</div><div class="tb-sub">{{districtName}}</div></div>
+      <div class="tb-div"></div>
+      <div class="tb-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="search" id="search" placeholder="Search tools&#8230;" aria-label="Search tools" autocomplete="off">
+      </div>
+      <div class="tb-spacer"></div>
+      <div class="tb-clock" id="clock"></div>
+      <span class="tb-badge" id="modeBadge"></span>
+    </header>
+
+    <div class="scroll" id="scroll">
+      <div class="content">
+
+        <div class="hero">
+          <div>
+            <h1 id="heroTitle"></h1>
+            <p id="heroText"></p>
+          </div>
+          <div class="hero-actions" id="heroActions"></div>
+        </div>
+
+        <div class="widgets" id="widgets"></div>
+
+        <!-- INTUNE -->
+        <div class="section" id="intune" style="--sc:#e67e22"><div class="label"><span class="dot"></span>Intune &amp; Endpoint</div><div class="line"></div></div>
+        <div class="grid">
+          <a class="card" href="tools/autopilot/index.html" style="--cc:#e67e22" data-tags="autopilot import hardware hash csv group tag readiness check enrollment oobe">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M9 8l2 2.5L15 7"/></svg></div><div class="card-title">Autopilot Import &amp; Check</div></div>
+            <div class="card-desc">Validate hardware hash CSVs, tag devices at import, push to Autopilot, and score any device's readiness out of 100.</div>
+            <div class="card-foot"><span class="pill green">Live</span><span class="card-ver">v2.0</span><span class="card-arrow">&rarr;</span></div>
+          </a>
+          <a class="card" href="tools/remediation/index.html" style="--cc:#e67e22" data-tags="remediation detection proactive script powershell ai generator intune push">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div><div class="card-title">Remediation Generator</div></div>
+            <div class="card-desc">Describe a problem in plain English and get an Intune detection and remediation pair, ready to push and assign.</div>
+            <div class="card-foot"><span class="pill green">Live</span><span class="pill blue">AI</span><span class="card-ver">v2.0</span><span class="card-arrow">&rarr;</span></div>
+          </a>
+          <a class="card" href="tools/win32/index.html" style="--cc:#e67e22" data-tags="win32 app builder msi exe intunewin package installer silent detection supersedence">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><div class="card-title">Win32 App Builder</div></div>
+            <div class="card-desc">Drop an MSI or EXE and get install, uninstall, and detection scripts, Intune settings, and a one-click .intunewin packager.</div>
+            <div class="card-foot"><span class="pill green">Live</span><span class="card-ver">v2.0</span><span class="card-arrow">&rarr;</span></div>
+          </a>
+        </div>
+
+        <!-- KIT -->
+        <div class="section" id="kit" style="--sc:#1abc9c"><div class="label"><span class="dot"></span>Take-Home Kit</div><div class="line"></div></div>
+        <div class="grid">
+          <a class="card" href="setup.html" style="--cc:#1abc9c" data-tags="setup branding colors logo app registration ai key configure">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div><div class="card-title" id="setupTitle">Build Your Kit</div></div>
+            <div class="card-desc" id="setupDesc">Your district's name, school colors, logo, Microsoft 365 app registration, and AI provider. Download the whole kit already branded.</div>
+            <div class="card-foot"><span class="pill blue">5 steps</span><span class="card-arrow">&rarr;</span></div>
+          </a>
+          <a class="card" href="downloads/tech-tools-kit.zip" id="blankKitCard" style="--cc:#1abc9c;display:none" download data-tags="download zip blank kit">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><div class="card-title">Download Blank Kit</div></div>
+            <div class="card-desc">Every tool, unbranded. Unzip it, open <code>setup.html</code>, and make it yours later.</div>
+            <div class="card-foot"><span class="pill green">.zip</span><span class="card-arrow">&rarr;</span></div>
+          </a>
+          <div class="card" style="--cc:#1abc9c" data-tags="sample csv autopilot hardware hash test download">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></div><div class="card-title">Sample Autopilot CSVs</div></div>
+            <div class="card-desc">Try the import checks without real devices: a clean file, and one with damaged and duplicate rows. The hashes are made up, so Intune will reject them.</div>
+            <div class="card-foot" style="flex-wrap:wrap">
+              <a class="tt-btn tt-btn--secondary" href="samples/autopilot-sample-clean.csv" download style="text-decoration:none;padding:6px 12px;font-size:12px">&#8681; Clean (8)</a>
+              <a class="tt-btn tt-btn--ghost" href="samples/autopilot-sample-with-problems.csv" download style="text-decoration:none;padding:6px 12px;font-size:12px">&#8681; With problems (10)</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- GUIDES -->
+        <div class="section" id="guides" style="--sc:#3498db"><div class="label"><span class="dot"></span>Setup Guides</div><div class="line"></div></div>
+        <div class="grid">
+          <a class="card" href="guides/getting-started.html" style="--cc:#3498db" data-tags="guide getting started hosting app registration permissions ai key">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><div class="card-title">Getting Started</div></div>
+            <div class="card-desc">What's in the kit, three ways to run it, the app registration, AI keys, and hosting.</div>
+            <div class="card-foot"><span class="pill blue">1 page</span><span class="card-arrow">&rarr;</span></div>
+          </a>
+          <a class="card" href="guides/autopilot.html" style="--cc:#3498db" data-tags="guide autopilot hash csv errors readiness">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="card-title">Autopilot Guide</div></div>
+            <div class="card-desc">Collecting hashes, group tags, import errors and what to do about them, and the readiness score.</div>
+            <div class="card-foot"><span class="pill blue">1 page</span><span class="card-arrow">&rarr;</span></div>
+          </a>
+          <a class="card" href="guides/remediation.html" style="--cc:#3498db" data-tags="guide remediation detection exit codes licensing testing">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="card-title">Remediations Guide</div></div>
+            <div class="card-desc">Exit codes, System vs. User, testing a script locally before it ever touches Intune, and licensing.</div>
+            <div class="card-foot"><span class="pill blue">1 page</span><span class="card-arrow">&rarr;</span></div>
+          </a>
+          <a class="card" href="guides/win32.html" style="--cc:#3498db" data-tags="guide win32 intunewin supersedence detection silent switches">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="card-title">Win32 Packaging Guide</div></div>
+            <div class="card-desc">Silent switches by installer type, building the .intunewin, version-specific detection, and supersedence.</div>
+            <div class="card-foot"><span class="pill blue">1 page</span><span class="card-arrow">&rarr;</span></div>
+          </a>
+        </div>
+        <div class="no-results" id="noResults">No tools match that search.</div>
+
+        <div class="about" id="about">
+          <b>About this kit.</b> Free, browser-based Intune tools that started as the internal Tech Tools portal at CLSD Technology Services. Everything runs in the browser: installers are read locally and never uploaded, AI calls go straight from your browser to your own provider, and Microsoft 365 sign-in uses your own app registration with each person's own permissions. Use it, change it, and share it under the MIT License.
+        </div>
+        <div class="foot">
+          <span>&copy; {{year}} {{districtShort}} {{deptName}} &middot; {{credit}} &middot; MIT License</span>
+          <span>{{portalName}} Kit v1.0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+'use strict';
+const isDemo = KitDemo.active, id = Kit.config.identity || {};
+// hero copy differs for the hosted demo vs a district's own kit
+document.getElementById('heroTitle').textContent = isDemo ? 'Intune tools, live demo' : `Intune tools for ${id.districtShort}`;
+document.getElementById('heroText').textContent = isDemo
+  ? 'Every tool here runs against a simulated tenant with scripted results, so try anything. When you’re ready, build your own copy with your district’s name, colors, and logo.'
+  : 'Free, browser-based tools for building Intune remediations, packaging Win32 apps, and importing Autopilot devices.';
+document.getElementById('heroActions').innerHTML = isDemo
+  ? '<a class="tt-btn tt-btn--primary" href="setup.html" style="text-decoration:none">Build your own kit &rarr;</a>'
+  : (Kit.config.configured ? '' : '<a class="tt-btn tt-btn--primary" href="setup.html" style="text-decoration:none">Run setup &rarr;</a>');
+const badge = document.getElementById('modeBadge');
+badge.className = 'tb-badge ' + (isDemo ? 'demo' : 'kit');
+badge.textContent = isDemo ? 'DEMO' : (Kit.isLive() ? 'CONNECTED' : 'KIT');
+if (!isDemo) { document.getElementById('setupTitle').textContent = 'Kit Setup'; document.getElementById('setupDesc').textContent = 'Change your district’s name, colors, logo, Microsoft 365 app registration, or AI provider.'; }
+
+// widgets
+const W = [
+  ['Intune tools', '3', 'Autopilot · Remediations · Win32', '#e67e22'],
+  ['Ready-made scripts', '6', 'detection + remediation pairs', '#1abc9c'],
+  ['Installer types', String(8), 'recognised without AI', '#8b5cf6'],
+  [isDemo ? 'Sample devices' : 'AI provider', isDemo ? '10' : (KitAI.providers[Kit.config.ai?.provider]?.label || '—').split(' ')[0], isDemo ? 'scripted import outcomes' : (KitAI.getKey(Kit.config.ai?.provider) ? 'key saved in this browser' : 'asks for a key on first use'), 'var(--brand-pale)']
+];
+document.getElementById('widgets').innerHTML = W.map(([l, v, s, c]) => `<div class="widget" style="--wc:${c}"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+
+// blank-kit download only exists on a hosted demo site
+if (isDemo) fetch('downloads/tech-tools-kit.zip', { method: 'HEAD' }).then(r => { if (r.ok) document.getElementById('blankKitCard').style.display = ''; }).catch(() => {});
+
+// clock
+const clock = document.getElementById('clock');
+function tick() { clock.textContent = new Date().toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+tick(); setInterval(tick, 30000);
+
+// search
+document.getElementById('search').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase();
+  let any = false;
+  document.querySelectorAll('.grid').forEach(g => {
+    let shown = 0;
+    g.querySelectorAll('.card').forEach(c => {
+      if (c.style.display === 'none' && c.id === 'blankKitCard') return;
+      const hit = !q || (c.textContent + ' ' + (c.dataset.tags || '')).toLowerCase().includes(q);
+      c.classList.toggle('hidden-by-search', !hit); if (hit) shown++;
+    });
+    const sec = g.previousElementSibling;
+    if (sec && sec.classList.contains('section')) sec.classList.toggle('hidden-by-search', !shown);
+    any = any || shown > 0;
+  });
+  document.getElementById('noResults').style.display = any ? 'none' : 'block';
+});
+
+// rail: smooth scroll + active section
+const scroller = document.getElementById('scroll');
+document.querySelectorAll('.rail-item[href^="#"]').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault();
+  const t = document.querySelector(a.getAttribute('href'));
+  if (t) scroller.scrollTo({ top: t.offsetTop - 12, behavior: 'smooth' });
+}));
+scroller.addEventListener('scroll', () => {
+  let cur = null;
+  ['intune', 'kit', 'guides', 'about'].forEach(id => { const el = document.getElementById(id); if (el && el.offsetTop - 80 <= scroller.scrollTop) cur = id; });
+  document.querySelectorAll('.rail-item[href^="#"]').forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur));
+});
+</script>
+</body>
+</html>

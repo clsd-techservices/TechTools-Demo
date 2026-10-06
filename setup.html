@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en" data-kit-setup>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kit Setup · {{portalName}}</title>
+<link rel="stylesheet" href="assets/kit-theme-dark.css">
+<script src="kit-config.js"></script>
+<script src="kit-brand.js"></script>
+<style>
+  .setup-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: var(--space-6); align-items: start; }
+  @media (max-width: 980px) { .setup-wrap { grid-template-columns: minmax(0, 1fr); } .preview-col { position: static !important; } }
+  .tt-main { max-width: 1280px; width: 100%; margin: 0 auto; padding: var(--space-6) var(--space-4); }
+
+  /* stepper */
+  .steps { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4); }
+  .step-pill { display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: var(--radius-full); border: 1px solid var(--border-glass); background: var(--glass-panel); color: var(--text-muted); font: 600 var(--font-size-sm) var(--font-ui); cursor: pointer; transition: all var(--transition-fast); }
+  .step-pill:hover { color: var(--text-secondary); border-color: var(--border-glass-bright); }
+  .step-pill .n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; background: rgba(var(--brand-pale-rgb), .14); color: var(--brand-pale); }
+  .step-pill.active { color: var(--text-primary); border-color: var(--brand-pale); background: rgba(var(--brand-rgb), .35); }
+  .step-pill.active .n { background: var(--brand-pale); color: var(--text-inverse); }
+  .step-pill.done .n { background: var(--color-success-bg); color: var(--color-success); }
+  .step { display: none; }
+  .step.active { display: block; }
+  .step-nav { display: flex; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-5); flex-wrap: wrap; }
+  .hint { font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 4px; line-height: 1.45; }
+  .intro { color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--space-4); line-height: 1.55; }
+  .req { color: var(--color-error); }
+  .field-err { border-color: var(--color-error) !important; }
+
+  /* color pickers */
+  .color-row { display: flex; gap: var(--space-2); align-items: center; }
+  .color-row input[type=color] { width: 48px; height: 40px; padding: 2px; border-radius: var(--radius-md); border: 1px solid var(--border-glass); background: var(--glass-input); cursor: pointer; flex-shrink: 0; }
+  .color-row .tt-input { font-family: var(--font-mono); text-transform: lowercase; }
+  .seg { display: inline-flex; border: 1px solid var(--border-glass); border-radius: var(--radius-md); overflow: hidden; flex-wrap: wrap; }
+  .seg button { background: var(--glass-input); color: var(--text-secondary); border: 0; padding: 8px 14px; font: 600 var(--font-size-sm) var(--font-ui); cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--border-glass); }
+  .seg button.active { background: rgba(var(--brand-rgb), .6); color: var(--text-primary); }
+  .swatches { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .swatch { width: 28px; height: 28px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,.12); }
+  .palette-notes { margin-top: var(--space-3); }
+
+  /* image drop zones */
+  .drop { border: 1.5px dashed var(--border-glass-bright); border-radius: var(--radius-lg); padding: var(--space-4); display: flex; gap: var(--space-4); align-items: center; cursor: pointer; background: rgba(var(--brand-pale-rgb), .04); transition: background var(--transition-fast); }
+  .drop:hover, .drop.over { background: rgba(var(--brand-pale-rgb), .10); }
+  .drop img { width: 64px; height: 64px; object-fit: contain; border-radius: var(--radius-md); background: rgba(0,0,0,.25); padding: 6px; flex-shrink: 0; }
+  .drop .meta { font-size: var(--font-size-sm); color: var(--text-secondary); min-width: 0; }
+  .drop .meta b { color: var(--text-primary); display: block; }
+  .radio-row { display: flex; gap: var(--space-4); flex-wrap: wrap; margin: 6px 0 10px; font-size: var(--font-size-sm); color: var(--text-secondary); }
+  .radio-row label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  input[type=range] { width: 100%; accent-color: var(--brand-pale); }
+
+  /* AI provider cards */
+  .prov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-2); }
+  .prov { border: 1px solid var(--border-glass); background: var(--glass-input); border-radius: var(--radius-lg); padding: 12px; cursor: pointer; text-align: left; color: var(--text-secondary); font-family: var(--font-ui); transition: all var(--transition-fast); }
+  .prov:hover { border-color: var(--border-glass-bright); }
+  .prov.active { border-color: var(--brand-pale); background: rgba(var(--brand-rgb), .32); color: var(--text-primary); box-shadow: var(--glow-accent); }
+  .prov b { display: block; font-size: var(--font-size-md); color: var(--text-primary); }
+  .prov small { font-size: var(--font-size-xs); }
+  .free { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: var(--radius-full); font-size: 10px; font-weight: 700; background: var(--color-success-bg); color: var(--color-success); vertical-align: middle; }
+  .key-row { display: flex; gap: var(--space-2); }
+  .key-row .tt-input { font-family: var(--font-mono); }
+  .key-status { font-size: var(--font-size-xs); margin-top: 6px; min-height: 1.2em; }
+  .key-status.ok { color: var(--color-success); } .key-status.err { color: var(--color-error); }
+
+  details.howto { margin-top: var(--space-3); border: 1px solid var(--border-glass); border-radius: var(--radius-md); background: rgba(var(--brand-pale-rgb), .04); }
+  details.howto summary { cursor: pointer; padding: 10px 14px; font-weight: 600; font-size: var(--font-size-sm); color: var(--brand-pale); }
+  details.howto ol { padding: 0 18px 14px 36px; font-size: var(--font-size-sm); color: var(--text-secondary); line-height: 1.7; }
+  details.howto code { font-family: var(--font-mono); font-size: .8rem; color: var(--text-primary); background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 4px; word-break: break-all; }
+
+  /* review */
+  .review { display: grid; grid-template-columns: max-content minmax(0,1fr); gap: 6px 16px; font-size: var(--font-size-sm); }
+  .review dt { color: var(--text-muted); }
+  .review dd { color: var(--text-primary); word-break: break-word; }
+  .save-actions { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
+  .save-opt { display: flex; gap: var(--space-4); align-items: center; justify-content: space-between; flex-wrap: wrap; padding: var(--space-4); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); background: var(--glass-input); }
+  .save-opt p { font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 2px; max-width: 46ch; }
+  .save-opt b { font-size: var(--font-size-md); }
+
+  /* live preview */
+  .preview-col { position: sticky; top: 84px; }
+  .pv-label { font: 700 var(--font-size-xs) var(--font-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .pv { position: relative; border-radius: var(--radius-xl); overflow: hidden; border: 1px solid var(--border-glass-bright); background: var(--bg-base); box-shadow: var(--shadow-lg); isolation: isolate; }
+  .pv::before { content: ""; position: absolute; inset: 0; background: var(--watermark-url) center / var(--watermark-size, cover) no-repeat; opacity: calc(var(--watermark-opacity) * 1.4); filter: saturate(.6) brightness(.8); z-index: 0; pointer-events: none; }
+  .pv > * { position: relative; z-index: 1; }
+  .pv-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--glass-header); border-bottom: 2px solid; border-image: linear-gradient(90deg, var(--brand-pale), var(--accent)) 1; }
+  .pv-head img { height: 30px; width: auto; max-width: 90px; object-fit: contain; }
+  .pv-head .t { font-weight: 700; font-size: .95rem; line-height: 1.2; }
+  .pv-head .s { font-size: .7rem; color: var(--text-secondary); }
+  .pv-head .b { margin-left: auto; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: var(--radius-full); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent); }
+  .pv-body { padding: 14px; display: grid; gap: 10px; }
+  .pv-card { background: var(--glass-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 12px; backdrop-filter: blur(10px); }
+  .pv-card h4 { font-size: .82rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .pv-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pv-in { flex: 1; min-width: 0; padding: 7px 10px; border-radius: var(--radius-md); border: 1px solid var(--border-glass); background: var(--glass-input); color: var(--text-muted); font-size: .75rem; }
+  .pv-btn { padding: 7px 12px; border-radius: var(--radius-md); background: var(--brand); color: #fff; font-size: .75rem; font-weight: 600; border: 1px solid rgba(var(--brand-pale-rgb), .45); box-shadow: 0 0 12px rgba(var(--brand-rgb), .35); }
+  .pv-out { font: .68rem/1.55 var(--font-mono); color: var(--text-output); background: rgba(0,0,0,.35); border: 1px solid rgba(var(--brand-pale-rgb), .14); border-radius: var(--radius-md); padding: 10px; white-space: pre-wrap; word-break: break-word; }
+  .pv-out .c { color: var(--text-muted); } .pv-out .k { color: var(--brand-pale); } .pv-out .ok { color: var(--color-success); }
+  .pv-foot { padding: 8px 14px; font-size: .65rem; color: var(--text-muted); background: var(--glass-footer); border-top: 1px solid var(--border-glass); }
+  .pv-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .pv-stat { background: var(--glass-panel); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 8px; text-align: center; }
+  .pv-stat b { display: block; font-size: 1.05rem; color: var(--brand-pale); }
+  .pv-stat span { font-size: .6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; z-index: 9999; max-width: min(560px, calc(100vw - 32px)); padding: 12px 18px; border-radius: var(--radius-lg); background: var(--glass-modal); border: 1px solid var(--color-error); color: var(--text-primary); font-size: var(--font-size-sm); box-shadow: var(--shadow-lg); transition: all var(--transition-base); backdrop-filter: var(--blur-modal); }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<div class="tt-app">
+  <header class="tt-header">
+    <a href="index.html" class="tt-btn tt-btn--ghost" style="text-decoration:none;padding:6px 12px;flex-shrink:0">&larr; Kit Home</a>
+    <img src="assets/kit-logo.svg" alt="{{districtShort}} logo" class="tt-header__logo" style="height:36px;width:auto;max-width:120px;object-fit:contain">
+    <div class="tt-header__divider"></div>
+    <div>
+      <div class="tt-header__title">Kit Setup</div>
+      <div class="tt-header__subtitle">Make the {{portalName}} kit yours: name, colors, logo, Microsoft 365, and AI</div>
+    </div>
+    <span class="tt-header__badge">SETUP</span>
+  </header>
+
+  <main class="tt-main">
+    <div class="setup-wrap">
+      <!-- ───────────── FORM ───────────── -->
+      <div>
+        <nav class="steps" id="steps" aria-label="Setup steps"></nav>
+
+        <!-- STEP 1 -->
+        <section class="step tt-card" data-step="District">
+          <div class="tt-card__header"><div class="tt-card__title">1 · Your district</div></div>
+          <div class="tt-card__body">
+            <p class="intro">These names replace the original district's name everywhere in the tools, including the comment headers and log paths inside every script the tools generate.</p>
+            <div class="tt-form-grid">
+              <div class="tt-form-group">
+                <label class="tt-label" for="districtName">District name <span class="req">*</span></label>
+                <input class="tt-input" id="districtName" data-path="identity.districtName" placeholder="Maple Valley School District" autocomplete="organization">
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="districtShort">Short name / initials <span class="req">*</span></label>
+                <input class="tt-input" id="districtShort" data-path="identity.districtShort" placeholder="MVSD" maxlength="16">
+                <div class="hint">Shown in headers, footers, and script publisher lines.</div>
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="deptName">Department name</label>
+                <input class="tt-input" id="deptName" data-path="identity.deptName" placeholder="Technology Services">
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="portalName">Portal / kit name</label>
+                <input class="tt-input" id="portalName" data-path="identity.portalName" placeholder="Tech Tools">
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="authorName">Script author name</label>
+                <input class="tt-input" id="authorName" data-path="identity.authorName" placeholder="Jordan Smith" autocomplete="name">
+                <div class="hint">Goes in the Author line of generated scripts.</div>
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="authorTitle">Author title</label>
+                <input class="tt-input" id="authorTitle" data-path="identity.authorTitle" placeholder="Systems Coordinator">
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="logFolder">Log folder name</label>
+                <input class="tt-input" id="logFolder" data-path="identity.logFolder" placeholder="MVSD" maxlength="32">
+                <div class="hint">Scripts log to <code style="font-family:var(--font-mono)">%LOCALAPPDATA%\<span id="logEcho">MVSD</span>\IntuneLogs</code>. Letters, numbers, - and _ only.</div>
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="supportEmail">IT support email <span style="color:var(--text-muted)">(optional)</span></label>
+                <input class="tt-input" id="supportEmail" data-path="identity.supportEmail" type="email" placeholder="helpdesk@mvsd.org" autocomplete="email">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 2 -->
+        <section class="step tt-card" data-step="Look">
+          <div class="tt-card__header"><div class="tt-card__title">2 · School colors &amp; logo</div></div>
+          <div class="tt-card__body">
+            <p class="intro">Pick your school colors and the whole interface re-themes as you go. The dark glass style stays; your colors drive buttons, highlights, glows, and the background tint.</p>
+            <div class="tt-form-grid">
+              <div class="tt-form-group">
+                <label class="tt-label" for="primaryHex">Primary school color</label>
+                <div class="color-row">
+                  <input type="color" id="primaryPick" aria-label="Pick primary color">
+                  <input class="tt-input" id="primaryHex" data-path="brand.primary" placeholder="#2563eb" maxlength="7">
+                </div>
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="secondaryHex">Secondary school color</label>
+                <div class="color-row">
+                  <input type="color" id="secondaryPick" aria-label="Pick secondary color">
+                  <input class="tt-input" id="secondaryHex" data-path="brand.secondary" placeholder="#60a5fa" maxlength="7">
+                </div>
+              </div>
+            </div>
+            <div class="tt-form-group">
+              <span class="tt-label">Background tint</span>
+              <div class="seg" id="tintSeg" role="radiogroup" aria-label="Background tint">
+                <button type="button" data-v="brand">School color</button>
+                <button type="button" data-v="navy">Classic navy</button>
+                <button type="button" data-v="neutral">Neutral charcoal</button>
+              </div>
+              <div class="swatches" id="swatches" aria-label="Generated palette"></div>
+              <div class="palette-notes" id="paletteNotes"></div>
+            </div>
+
+            <div class="tt-divider" style="margin:var(--space-5) 0"></div>
+
+            <div class="tt-form-group">
+              <span class="tt-label">District or department logo</span>
+              <div class="drop" id="logoDrop" tabindex="0" role="button" aria-label="Upload logo">
+                <img id="logoThumb" alt="">
+                <div class="meta"><b id="logoName">Drop a logo here or click to browse</b>PNG, SVG, JPG or WebP. Transparent PNG or SVG looks best on the dark background.</div>
+              </div>
+              <input type="file" id="logoFile" accept="image/png,image/svg+xml,image/jpeg,image/webp" class="sr-only">
+            </div>
+
+            <div class="tt-form-group">
+              <span class="tt-label">Background watermark</span>
+              <div class="radio-row" id="wmRadios">
+                <label><input type="radio" name="wm" value="logo"> Use my logo</label>
+                <label><input type="radio" name="wm" value="custom"> Upload a different image (mascot, crest)</label>
+                <label><input type="radio" name="wm" value="none"> None</label>
+              </div>
+              <div class="drop" id="wmDrop" tabindex="0" role="button" aria-label="Upload watermark" style="display:none">
+                <img id="wmThumb" alt="">
+                <div class="meta"><b id="wmName">Drop a mascot or crest image</b>It's shown large and very faint behind every tool.</div>
+              </div>
+              <input type="file" id="wmFile" accept="image/png,image/svg+xml,image/jpeg,image/webp" class="sr-only">
+              <div id="wmOpacityWrap">
+                <label class="tt-label" for="wmOpacity" style="margin-top:10px">Watermark strength <span id="wmOpacityVal" style="color:var(--text-muted)"></span></label>
+                <input type="range" id="wmOpacity" min="0.02" max="0.14" step="0.01">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 3 -->
+        <section class="step tt-card" data-step="Microsoft 365">
+          <div class="tt-card__header"><div class="tt-card__title">3 · Microsoft 365 / Intune <span class="tt-badge tt-badge--gray" style="margin-left:8px">Optional</span></div></div>
+          <div class="tt-card__body">
+            <div class="tt-alert tt-alert--info" style="margin-bottom:var(--space-4)">Leave these blank and the tools run in <b>offline mode</b>: they still generate every script and package, you just upload to Intune yourself. Fill them in to let the Autopilot and Remediation tools publish straight to your tenant.</div>
+            <div class="tt-form-grid">
+              <div class="tt-form-group">
+                <label class="tt-label" for="tenantId">Tenant (directory) ID</label>
+                <input class="tt-input" id="tenantId" data-path="microsoft.tenantId" placeholder="00000000-0000-0000-0000-000000000000" style="font-family:var(--font-mono)">
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="clientId">App (client) ID</label>
+                <input class="tt-input" id="clientId" data-path="microsoft.clientId" placeholder="00000000-0000-0000-0000-000000000000" style="font-family:var(--font-mono)">
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="primaryDomain">Primary email domain</label>
+                <input class="tt-input" id="primaryDomain" data-path="microsoft.primaryDomain" placeholder="mvsd.org">
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="groupTags">Autopilot group tag examples</label>
+                <input class="tt-input" id="groupTags" data-path="microsoft.groupTagExamples" placeholder="Staff-HS, 1to1-MS, Cart-ES">
+                <div class="hint">Comma-separated. Suggested in the Autopilot import tool.</div>
+              </div>
+            </div>
+            <div id="msErr" class="tt-alert tt-alert--warning" style="display:none;margin-top:var(--space-3)"></div>
+            <details class="howto">
+              <summary>How to create the app registration (about 5 minutes)</summary>
+              <ol>
+                <li>Open the <b>Microsoft Entra admin center</b> &rarr; <b>App registrations</b> &rarr; <b>New registration</b>. Name it something like <code>{{portalName}} Kit</code>, single tenant.</li>
+                <li>Under <b>Redirect URI</b>, choose <b>Single-page application (SPA)</b> and enter the kit's sign-in page:<br><code id="redirectUri"></code></li>
+                <li>Copy the <b>Application (client) ID</b> and <b>Directory (tenant) ID</b> from the Overview page into the boxes above.</li>
+                <li><b>API permissions</b> &rarr; Add &rarr; Microsoft Graph &rarr; <b>Delegated</b>: <code>DeviceManagementServiceConfig.ReadWrite.All</code> and <code>DeviceManagementManagedDevices.Read.All</code> (Autopilot), <code>DeviceManagementConfiguration.ReadWrite.All</code> and <code>Group.Read.All</code> (Remediations).</li>
+                <li>Click <b>Grant admin consent</b>. No client secret is needed: everyone signs in as themselves and only gets what their Intune role allows.</li>
+              </ol>
+            </details>
+          </div>
+        </section>
+
+        <!-- STEP 4 -->
+        <section class="step tt-card" data-step="AI">
+          <div class="tt-card__header"><div class="tt-card__title">4 · AI provider</div></div>
+          <div class="tt-card__body">
+            <p class="intro">The Remediation Generator and Win32 Builder use AI to write detection and remediation scripts. Pick a provider; Groq and Gemini both have free tiers that work fine for this. Calls go straight from your browser to the provider, with no server in between.</p>
+            <div class="prov-grid" id="provGrid" role="radiogroup" aria-label="AI provider"></div>
+
+            <div class="tt-form-grid" style="margin-top:var(--space-4)">
+              <div class="tt-form-group">
+                <label class="tt-label" for="aiKey"><span id="aiKeyLabel">API key</span> <span style="color:var(--text-muted)">(optional now)</span></label>
+                <div class="key-row">
+                  <input class="tt-input" id="aiKey" type="password" autocomplete="off" spellcheck="false">
+                  <button class="tt-btn tt-btn--secondary" type="button" id="aiTest">Test</button>
+                </div>
+                <div class="key-status" id="aiKeyStatus"></div>
+                <div class="hint"><a id="aiKeyLink" target="_blank" rel="noopener" style="color:var(--brand-pale)">Get a key &rarr;</a> &nbsp;Skip it and each person is asked for a key the first time they use an AI feature.</div>
+              </div>
+              <div class="tt-form-group">
+                <label class="tt-label" for="aiModel">Model</label>
+                <input class="tt-input" id="aiModel" list="aiModelList" autocomplete="off">
+                <datalist id="aiModelList"></datalist>
+                <div class="hint">Testing a key loads the models your account can use.</div>
+              </div>
+            </div>
+
+            <details class="howto" id="fbDetails">
+              <summary>Add a fallback provider (used if the first one fails)</summary>
+              <div style="padding: 0 14px 14px">
+                <div class="tt-form-grid">
+                  <div class="tt-form-group">
+                    <label class="tt-label" for="fbProvider">Fallback provider</label>
+                    <select class="tt-select" id="fbProvider"></select>
+                  </div>
+                  <div class="tt-form-group">
+                    <label class="tt-label" for="fbModel">Fallback model</label>
+                    <input class="tt-input" id="fbModel" list="fbModelList" autocomplete="off">
+                    <datalist id="fbModelList"></datalist>
+                  </div>
+                  <div class="tt-form-group" style="grid-column:1/-1">
+                    <label class="tt-label" for="fbKey">Fallback API key</label>
+                    <div class="key-row">
+                      <input class="tt-input" id="fbKey" type="password" autocomplete="off" spellcheck="false">
+                      <button class="tt-btn tt-btn--secondary" type="button" id="fbTest">Test</button>
+                    </div>
+                    <div class="key-status" id="fbKeyStatus"></div>
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <div class="tt-form-group" style="margin-top:var(--space-4)">
+              <span class="tt-label">Where should keys be kept?</span>
+              <div class="radio-row" style="flex-direction:column;gap:8px">
+                <label><input type="radio" name="keyStore" value="browser"> <span><b style="color:var(--text-primary)">Each person's browser</b> (recommended). Keys never leave the browser except to call the provider.</span></label>
+                <label><input type="radio" name="keyStore" value="config"> <span><b style="color:var(--text-primary)">Inside kit-config.js</b>. Convenient on one PC, but anyone who can open the file can read the key.</span></label>
+              </div>
+              <div id="keyStoreWarn" class="tt-alert tt-alert--warning" style="display:none">Only use this if the kit stays on your own computer or an internal share. Never put a kit with an embedded key on a public web server, and set a monthly spend limit on the key.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 5 -->
+        <section class="step tt-card" data-step="Save">
+          <div class="tt-card__header"><div class="tt-card__title">5 · Review &amp; save</div></div>
+          <div class="tt-card__body">
+            <div id="reviewErr" class="tt-alert tt-alert--error" style="display:none;margin-bottom:var(--space-4)"></div>
+            <dl class="review" id="review"></dl>
+            <div class="save-actions">
+              <div class="save-opt">
+                <div><b>Download your kit (.zip)</b><p>Every tool, already branded for your district. Unzip it anywhere and open <code>index.html</code>.</p></div>
+                <button class="tt-btn tt-btn--primary" type="button" id="btnZip">Download kit</button>
+              </div>
+              <div class="save-opt">
+                <div><b>Download kit-config.js only</b><p>Already have the kit? Replace the <code>kit-config.js</code> in its folder with this file.</p></div>
+                <button class="tt-btn tt-btn--secondary" type="button" id="btnConfig">Download config</button>
+              </div>
+              <div class="save-opt">
+                <div><b>Apply in this browser</b><p>Quick test: tools opened in this browser from this folder use these settings right away.</p></div>
+                <button class="tt-btn tt-btn--secondary" type="button" id="btnApply">Apply</button>
+              </div>
+            </div>
+            <div id="saveMsg" class="tt-alert tt-alert--success" style="display:none;margin-top:var(--space-4)"></div>
+            <div class="tt-divider" style="margin:var(--space-5) 0"></div>
+            <div class="tt-row" style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+              <button class="tt-btn tt-btn--ghost" type="button" id="btnImport">Load an existing kit-config.js</button>
+              <input type="file" id="importFile" accept=".js,.json" class="sr-only">
+              <button class="tt-btn tt-btn--ghost" type="button" id="btnReset">Start over</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="step-nav">
+          <button class="tt-btn tt-btn--ghost" type="button" id="btnBack">&larr; Back</button>
+          <button class="tt-btn tt-btn--primary" type="button" id="btnNext">Next &rarr;</button>
+        </div>
+      </div>
+
+      <!-- ───────────── PREVIEW ───────────── -->
+      <aside class="preview-col" aria-label="Live preview">
+        <div class="pv-label"><span>Live preview</span><span id="pvMode"></span></div>
+        <div class="pv">
+          <div class="pv-head">
+            <img data-kit-logo src="assets/kit-logo.svg" alt="">
+            <div><div class="t">Remediation Generator</div><div class="s">{{districtName}} · {{deptName}}</div></div>
+            <span class="b">v1.0</span>
+          </div>
+          <div class="pv-body">
+            <div class="pv-stats">
+              <div class="pv-stat"><b>10</b><span>Devices</span></div>
+              <div class="pv-stat"><b style="color:var(--color-success)">7</b><span>Imported</span></div>
+              <div class="pv-stat"><b style="color:var(--color-warning)">3</b><span>Need review</span></div>
+            </div>
+            <div class="pv-card">
+              <h4>Describe the problem <span class="tt-badge tt-badge--blue" style="font-size:9px">AI</span></h4>
+              <div class="pv-row"><div class="pv-in">Teams cache is corrupt on student devices…</div><div class="pv-btn">Generate</div></div>
+            </div>
+            <div class="pv-out"><span class="c">&lt;#
+.SYNOPSIS   Detect corrupt Teams cache
+.AUTHOR     {{author}}
+.PUBLISHER  {{publisher}}
+#&gt;</span>
+<span class="k">$LogDir</span> = "$env:LOCALAPPDATA\{{logFolder}}\IntuneLogs"
+<span class="ok">Write-Output "Compliant"</span>; exit 0</div>
+          </div>
+          <div class="pv-foot">&copy; {{year}} {{districtShort}} {{deptName}}</div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="tt-footer">
+    <span>{{portalName}} Kit · {{credit}} · MIT License</span>
+    <span>Setup v1.0</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  // Always build from blank-kit defaults, so a hosted demo site's own branding never leaks into a visitor's kit
+  var DEFAULTS = JSON.parse(JSON.stringify(Kit.NEUTRAL));
+  var LOCKED = !!(window.KIT_CONFIG && window.KIT_CONFIG.lockBranding);
+  var GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  var HEX = /^#?[0-9a-f]{6}$/i;
+  var STEPS = Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var cur = 0;
+
+  // Working state. Images and keys live here rather than in form fields.
+  var START_BLANK = LOCKED || !Kit.config.configured;
+  var state = JSON.parse(JSON.stringify(LOCKED ? DEFAULTS : Kit.config));
+  state.ai = state.ai || {};
+  var keys = { primary: '', fallback: '' };
+  var images = { logo: state.brand.logo, watermark: state.brand.watermark };
+  if (START_BLANK) {
+    // start with empty text fields so placeholders show; preview falls back to defaults
+    ['districtName', 'districtShort', 'authorName', 'authorTitle', 'supportEmail', 'logFolder'].forEach(function (k) { state.identity[k] = ''; });
+  }
+
+  function get(obj, path) { return path.split('.').reduce(function (o, k) { return o ? o[k] : undefined; }, obj); }
+  function set(obj, path, v) { var ks = path.split('.'), last = ks.pop(); ks.reduce(function (o, k) { return o[k] = o[k] || {}; }, obj)[last] = v; }
+  function normHex(v) { v = String(v || '').trim(); if (!v) return ''; if (v[0] !== '#') v = '#' + v; return HEX.test(v) ? v.toLowerCase() : null; }
+  function sanitizeFolder(v) { return String(v || '').replace(/[^A-Za-z0-9_-]/g, ''); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // Effective config = state with blanks filled from defaults (used for preview + output)
+  function effective() {
+    var c = JSON.parse(JSON.stringify(state));
+    var d = DEFAULTS;
+    Object.keys(d.identity).forEach(function (k) { if (!c.identity[k] && k !== 'authorTitle' && k !== 'supportEmail') c.identity[k] = d.identity[k]; });
+    if (!state.identity.logFolder && state.identity.districtShort) c.identity.logFolder = sanitizeFolder(state.identity.districtShort);
+    if (!state.identity.authorName && state.identity.districtShort) c.identity.authorName = c.identity.districtShort + ' ' + c.identity.deptName;
+    c.brand.primary = normHex(state.brand.primary) || d.brand.primary;
+    c.brand.secondary = normHex(state.brand.secondary) || d.brand.secondary;
+    c.brand.logo = images.logo || d.brand.logo;
+    c.brand.watermark = images.watermark || 'logo';
+    return c;
+  }
+
+  // ── steps ──────────────────────────────────────────────────
+  function renderSteps() {
+    $('steps').innerHTML = STEPS.map(function (s, i) {
+      return '<button type="button" class="step-pill' + (i === cur ? ' active' : '') + (i < cur ? ' done' : '') + '" data-i="' + i + '"' + (i === cur ? ' aria-current="step"' : '') + '><span class="n">' + (i < cur ? '&#10003;' : i + 1) + '</span>' + s.dataset.step + '</button>';
+    }).join('');
+    STEPS.forEach(function (s, i) { s.classList.toggle('active', i === cur); });
+    $('btnBack').style.visibility = cur === 0 ? 'hidden' : 'visible';
+    $('btnNext').style.display = cur === STEPS.length - 1 ? 'none' : '';
+    if (cur === STEPS.length - 1) renderReview();
+  }
+  function go(i) { cur = Math.max(0, Math.min(STEPS.length - 1, i)); renderSteps(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  $('steps').addEventListener('click', function (e) { var b = e.target.closest('.step-pill'); if (b) go(+b.dataset.i); });
+  $('btnBack').onclick = function () { go(cur - 1); };
+  $('btnNext').onclick = function () { go(cur + 1); };
+
+  // ── text fields bound by data-path ─────────────────────────
+  document.querySelectorAll('[data-path]').forEach(function (el) {
+    el.value = get(state, el.dataset.path) || '';
+    el.addEventListener('input', function () {
+      var v = el.value;
+      if (el.id === 'logFolder') { v = sanitizeFolder(v); if (v !== el.value) el.value = v; }
+      set(state, el.dataset.path, v.trim());
+      if (el.id === 'primaryHex' || el.id === 'secondaryHex') syncPickers();
+      if (el.id === 'districtShort') { $('logFolder').placeholder = sanitizeFolder(v) || 'MVSD'; }
+      refresh();
+    });
+  });
+
+  // ── colors ─────────────────────────────────────────────────
+  function syncPickers() {
+    var e = effective();
+    $('primaryPick').value = e.brand.primary;
+    $('secondaryPick').value = e.brand.secondary;
+    ['primary', 'secondary'].forEach(function (k) {
+      var raw = state.brand[k];
+      $(k + 'Hex').classList.toggle('field-err', !!raw && normHex(raw) === null);
+    });
+  }
+  ['primary', 'secondary'].forEach(function (k) {
+    $(k + 'Pick').addEventListener('input', function (e) { state.brand[k] = e.target.value; $(k + 'Hex').value = e.target.value; syncPickers(); refresh(); });
+  });
+  $('tintSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    state.brand.bgTint = b.dataset.v; refresh();
+  });
+
+  // ── images ─────────────────────────────────────────────────
+  function readImage(file, maxDim) {
+    return new Promise(function (resolve, reject) {
+      if (!file || !/^image\//.test(file.type)) return reject(new Error('Please choose an image file.'));
+      var fr = new FileReader();
+      fr.onerror = function () { reject(new Error('Couldn’t read that file.')); };
+      fr.onload = function () {
+        var url = fr.result;
+        if (file.type === 'image/svg+xml' && file.size < 150000) return resolve({ url: url, bytes: file.size });
+        var img = new Image();
+        img.onload = function () {
+          var scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+          var c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+          c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          var out = c.toDataURL('image/webp', 0.85);
+          if (out.indexOf('data:image/webp') !== 0) out = c.toDataURL('image/png');
+          resolve({ url: out, bytes: Math.round(out.length * 0.75) });
+        };
+        img.onerror = function () { reject(new Error('That image couldn’t be opened.')); };
+        img.src = url;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+  function kb(n) { return n > 1024 * 1024 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+  function wireDrop(dropId, fileId, maxDim, onImg) {
+    var drop = $(dropId), input = $(fileId);
+    drop.addEventListener('click', function () { input.click(); });
+    drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+    drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', function () { drop.classList.remove('over'); });
+    drop.addEventListener('drop', function (e) { e.preventDefault(); drop.classList.remove('over'); handle(e.dataTransfer.files[0]); });
+    input.addEventListener('change', function () { handle(input.files[0]); input.value = ''; });
+    function handle(f) { readImage(f, maxDim).then(function (r) { onImg(r, f); }).catch(function (e) { alertBox(e.message); }); }
+  }
+  var toastTimer;
+  function alertBox(msg) {
+    var t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, 6000);
+  }
+  wireDrop('logoDrop', 'logoFile', 512, function (r, f) { images.logo = r.url; $('logoName').textContent = f.name + ' · ' + kb(r.bytes); refresh(); });
+  wireDrop('wmDrop', 'wmFile', 1600, function (r, f) { images.watermark = r.url; $('wmName').textContent = f.name + ' · ' + kb(r.bytes); refresh(); });
+  document.querySelectorAll('input[name=wm]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      if (r.value === 'custom') { if (!images.watermark || images.watermark === 'logo' || images.watermark === 'none') images.watermark = ''; $('wmDrop').style.display = ''; }
+      else { images.watermark = r.value; $('wmDrop').style.display = 'none'; }
+      refresh();
+    });
+  });
+  $('wmOpacity').addEventListener('input', function (e) { state.brand.watermarkOpacity = +e.target.value; refresh(); });
+
+  // ── Microsoft ──────────────────────────────────────────────
+  function kitUrl() {
+    if (!/^https?:/.test(location.protocol)) return 'https://your-server/tech-tools-kit/redirect.html  (sign-in needs the kit served over https, or http://localhost)';
+    return location.href.replace(/[^/]*([?#].*)?$/, '') + 'redirect.html';
+  }
+  $('redirectUri').textContent = kitUrl();
+  function msErrors() {
+    var m = state.microsoft, errs = [];
+    if (m.tenantId && !GUID.test(m.tenantId)) errs.push('Tenant ID should look like 00000000-0000-0000-0000-000000000000.');
+    if (m.clientId && !GUID.test(m.clientId)) errs.push('Client ID should look like 00000000-0000-0000-0000-000000000000.');
+    if (!!m.tenantId !== !!m.clientId) errs.push('Fill in both the tenant ID and client ID, or leave both blank for offline mode.');
+    return errs;
+  }
+
+  // ── AI ─────────────────────────────────────────────────────
+  var P = KitAI.providers;
+  function renderProviders() {
+    $('provGrid').innerHTML = Object.keys(P).map(function (k) {
+      var p = P[k];
+      return '<button type="button" role="radio" aria-checked="' + (state.ai.provider === k) + '" class="prov' + (state.ai.provider === k ? ' active' : '') + '" data-p="' + k + '"><b>' + esc(p.label) + (p.free ? '<span class="free">Free tier</span>' : '') + '</b><small>' + esc(p.defaultModel) + '</small></button>';
+    }).join('');
+    var p = P[state.ai.provider] || P.anthropic;
+    $('aiKeyLabel').textContent = p.label + ' API key';
+    $('aiKey').placeholder = p.keyHint;
+    $('aiKeyLink').href = p.keyUrl;
+    $('aiModel').placeholder = p.defaultModel;
+    $('fbProvider').innerHTML = '<option value="">None</option>' + Object.keys(P).filter(function (k) { return k !== state.ai.provider; })
+      .map(function (k) { return '<option value="' + k + '"' + (state.ai.fallbackProvider === k ? ' selected' : '') + '>' + esc(P[k].label) + '</option>'; }).join('');
+    if (state.ai.fallbackProvider === state.ai.provider) state.ai.fallbackProvider = '';
+    var fp = P[state.ai.fallbackProvider];
+    $('fbModel').placeholder = fp ? fp.defaultModel : '';
+    $('fbKey').placeholder = fp ? fp.keyHint : '';
+    $('fbKey').disabled = $('fbModel').disabled = $('fbTest').disabled = !fp;
+  }
+  $('provGrid').addEventListener('click', function (e) {
+    var b = e.target.closest('.prov'); if (!b || b.dataset.p === state.ai.provider) return;
+    state.ai.provider = b.dataset.p; state.ai.model = ''; $('aiModel').value = ''; $('aiModelList').innerHTML = '';
+    keys.primary = KitAI.getKey(state.ai.provider) || ''; $('aiKey').value = keys.primary;
+    $('aiKeyStatus').textContent = ''; renderProviders(); refresh();
+  });
+  $('aiKey').addEventListener('input', function (e) { keys.primary = e.target.value.trim(); $('aiKeyStatus').textContent = ''; });
+  $('aiModel').addEventListener('input', function (e) { state.ai.model = e.target.value.trim(); });
+  $('fbProvider').addEventListener('change', function (e) {
+    state.ai.fallbackProvider = e.target.value; state.ai.fallbackModel = ''; $('fbModel').value = '';
+    keys.fallback = KitAI.getKey(e.target.value) || ''; $('fbKey').value = keys.fallback; $('fbKeyStatus').textContent = ''; renderProviders();
+  });
+  $('fbKey').addEventListener('input', function (e) { keys.fallback = e.target.value.trim(); });
+  $('fbModel').addEventListener('input', function (e) { state.ai.fallbackModel = e.target.value.trim(); });
+
+  function wireTest(btnId, keyId, statusId, listId, provFn, modelId) {
+    $(btnId).onclick = async function () {
+      var prov = provFn(), key = $(keyId).value.trim(), st = $(statusId);
+      if (!prov) return;
+      if (!key) { st.className = 'key-status err'; st.textContent = 'Paste a key first.'; return; }
+      $(btnId).disabled = true; st.className = 'key-status'; st.textContent = 'Testing…';
+      try {
+        var models = await KitAI.test(prov, key);
+        $(listId).innerHTML = models.map(function (m) { return '<option value="' + esc(m) + '">'; }).join('');
+        st.className = 'key-status ok';
+        st.textContent = '✓ Key works. ' + models.length + ' models available.';
+        var mi = $(modelId);
+        if (!mi.value) {
+          var def = P[prov].defaultModel;
+          var pick = models.indexOf(def) !== -1 ? def : (models.find(function (m) { return m.indexOf(def) === 0; }) || '');
+          if (pick) { mi.value = pick; mi.dispatchEvent(new Event('input')); }
+        }
+      } catch (e) { st.className = 'key-status err'; st.textContent = e.message; }
+      $(btnId).disabled = false;
+    };
+  }
+  wireTest('aiTest', 'aiKey', 'aiKeyStatus', 'aiModelList', function () { return state.ai.provider; }, 'aiModel');
+  wireTest('fbTest', 'fbKey', 'fbKeyStatus', 'fbModelList', function () { return state.ai.fallbackProvider; }, 'fbModel');
+  document.querySelectorAll('input[name=keyStore]').forEach(function (r) {
+    r.addEventListener('change', function () { state.ai.keyStorage = r.value; $('keyStoreWarn').style.display = r.value === 'config' ? '' : 'none'; });
+  });
+
+  // ── refresh: re-theme page + preview ───────────────────────
+  function refresh() {
+    var e = effective();
+    var pal = Kit.apply(e);
+    // swatches + notes
+    var v = pal.vars;
+    $('swatches').innerHTML = ['--brand-dark', '--brand', '--brand-mid', '--brand-light', '--brand-pale', '--accent', '--bg-base', '--bg-elev', '--text-secondary']
+      .map(function (k) { return '<span class="swatch" title="' + k + ' ' + v[k] + '" style="background:' + v[k] + '"></span>'; }).join('');
+    $('paletteNotes').innerHTML = pal.notes.map(function (n) { return '<div class="hint">ℹ️ ' + esc(n) + '</div>'; }).join('');
+    document.querySelectorAll('#tintSeg button').forEach(function (b) { b.classList.toggle('active', b.dataset.v === (e.brand.bgTint || 'brand')); b.setAttribute('aria-checked', b.classList.contains('active')); });
+    $('logoThumb').src = e.brand.logo;
+    var wmSrc = e.brand.watermark === 'logo' ? e.brand.logo : (e.brand.watermark && e.brand.watermark !== 'none' ? e.brand.watermark : '');
+    $('wmThumb').src = wmSrc || e.brand.logo;
+    $('wmOpacityWrap').style.display = e.brand.watermark === 'none' ? 'none' : '';
+    $('wmOpacity').value = e.brand.watermarkOpacity;
+    $('wmOpacityVal').textContent = Math.round(e.brand.watermarkOpacity * 100) + '%';
+    $('logEcho').textContent = e.identity.logFolder;
+    $('pvMode').textContent = state.microsoft.tenantId && state.microsoft.clientId ? 'Live tenant mode' : 'Offline mode';
+    var errs = msErrors();
+    $('msErr').style.display = errs.length ? '' : 'none';
+    $('msErr').innerHTML = errs.map(esc).join('<br>');
+    $('tenantId').classList.toggle('field-err', !!state.microsoft.tenantId && !GUID.test(state.microsoft.tenantId));
+    $('clientId').classList.toggle('field-err', !!state.microsoft.clientId && !GUID.test(state.microsoft.clientId));
+    if (cur === STEPS.length - 1) renderReview();
+  }
+
+  // ── review / output ────────────────────────────────────────
+  function problems() {
+    var p = [];
+    if (!state.identity.districtName) p.push('District name is required (step 1).');
+    if (!state.identity.districtShort) p.push('Short name is required (step 1).');
+    if (state.brand.primary && normHex(state.brand.primary) === null) p.push('Primary color isn’t a valid hex color (step 2).');
+    if (state.brand.secondary && normHex(state.brand.secondary) === null) p.push('Secondary color isn’t a valid hex color (step 2).');
+    return p.concat(msErrors().map(function (e) { return e + ' (step 3)'; }));
+  }
+  function finalConfig() {
+    var c = effective();
+    c.configured = true;
+    c.version = 1;
+    c.savedAt = Date.now();
+    c.ai.keys = {};
+    if (c.ai.keyStorage === 'config') {
+      if (keys.primary) c.ai.keys[c.ai.provider] = keys.primary;
+      if (c.ai.fallbackProvider && keys.fallback) c.ai.keys[c.ai.fallbackProvider] = keys.fallback;
+    }
+    return c;
+  }
+  function renderReview() {
+    var e = effective(), errs = problems();
+    $('reviewErr').style.display = errs.length ? '' : 'none';
+    $('reviewErr').innerHTML = '<b>Fix these first:</b><br>' + errs.map(esc).join('<br>');
+    ['btnZip', 'btnConfig', 'btnApply'].forEach(function (id) { $(id).disabled = errs.length > 0; });
+    var ai = P[e.ai.provider], fb = P[e.ai.fallbackProvider];
+    var rows = [
+      ['District', e.identity.districtName + ' (' + e.identity.districtShort + ')'],
+      ['Department', e.identity.deptName],
+      ['Kit name', e.identity.portalName],
+      ['Script author', [e.identity.authorName, e.identity.authorTitle].filter(Boolean).join(', ')],
+      ['Log path', '%LOCALAPPDATA%\\' + e.identity.logFolder + '\\IntuneLogs'],
+      ['Colors', '<span class="swatch" style="display:inline-block;width:14px;height:14px;vertical-align:-2px;background:' + e.brand.primary + '"></span> ' + e.brand.primary + ' &nbsp; <span class="swatch" style="display:inline-block;width:14px;height:14px;vertical-align:-2px;background:' + e.brand.secondary + '"></span> ' + e.brand.secondary],
+      ['Logo', images.logo && images.logo !== DEFAULTS.brand.logo ? 'Custom (embedded in config)' : 'Default kit logo'],
+      ['Microsoft 365', state.microsoft.tenantId && state.microsoft.clientId ? 'Live: tenant ' + state.microsoft.tenantId.slice(0, 8) + '…' : 'Offline mode'],
+      ['AI', ai.label + ' · ' + (e.ai.model || ai.defaultModel) + (fb ? ' &nbsp;→ fallback ' + fb.label : '')],
+      ['API keys', e.ai.keyStorage === 'config' ? '<span style="color:var(--color-warning)">Embedded in kit-config.js</span>' : 'Each user’s browser' + (keys.primary ? ' (yours is saved here when you apply)' : '')]
+    ];
+    $('review').innerHTML = rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + (r[0] === 'Colors' || r[0] === 'API keys' || r[0] === 'AI' ? r[1] : esc(r[1])) + '</dd>'; }).join('');
+  }
+
+  function configFileText(c) {
+    return '/*\n * Tech Tools Kit - district configuration\n * Generated by setup.html on ' + new Date().toLocaleString() + ' for ' + c.identity.districtName + '.\n' +
+      ' * Re-run setup.html and use "Load an existing kit-config.js" to change it later.\n' +
+      (c.ai.keyStorage === 'config' ? ' * WARNING: this file contains an AI API key. Do not publish it on a public web server.\n' : '') +
+      ' *\n * Copyright (c) 2026 Scott Boyer, Systems Coordinator, CLSD Technology Services. MIT License (see LICENSE).\n */\nwindow.KIT_CONFIG = ' + JSON.stringify(c, null, 2) + ';\n';
+  }
+  function download(name, blob) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }
+  function saveKeysLocally(c) {
+    if (keys.primary) KitAI.setKey(c.ai.provider, keys.primary);
+    if (c.ai.fallbackProvider && keys.fallback) KitAI.setKey(c.ai.fallbackProvider, keys.fallback);
+  }
+  function ok(msg) { var m = $('saveMsg'); m.className = 'tt-alert tt-alert--success'; m.innerHTML = msg; m.style.display = ''; }
+  function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'district'; }
+
+  $('btnConfig').onclick = function () {
+    var c = finalConfig();
+    download('kit-config.js', new Blob([configFileText(c)], { type: 'text/javascript' }));
+    saveKeysLocally(c);
+    ok('<b>kit-config.js downloaded.</b> Put it in your kit folder, replacing the existing one, then open <code>index.html</code>.');
+  };
+  $('btnApply').onclick = function () {
+    var c = finalConfig();
+    saveKeysLocally(c);
+    if (Kit.saveToBrowser(c)) ok('<b>Applied in this browser.</b> Open any tool in this kit to see it. Download the config too so it sticks on other computers and browsers.');
+    else alertBox('This browser blocked local storage (private window?). Use Download config instead.');
+  };
+  $('btnZip').onclick = async function () {
+    var btn = $('btnZip'), c = finalConfig();
+    if (!window.JSZip) { alertBox('The zip library couldn’t load (offline?). Use Download config instead.'); return; }
+    if (!/^https?:/.test(location.protocol)) { alertBox('Building the zip only works when the kit is opened from a web server. You already have the kit files here, so use Download config instead.'); return; }
+    btn.disabled = true; btn.textContent = 'Building…';
+    try {
+      var man = await fetch('kit-manifest.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('kit-manifest.json not found'); return r.json(); });
+      var zip = new JSZip(), root = zip.folder(slug(c.identity.districtShort) + '-tech-tools-kit');
+      var files = man.files || [];
+      for (var i = 0; i < files.length; i++) {
+        var f = files[i];
+        btn.textContent = 'Building… ' + Math.round((i / files.length) * 100) + '%';
+        if (f === 'kit-config.js') { root.file(f, configFileText(c)); continue; }
+        var r = await fetch(f, { cache: 'no-store' });
+        if (!r.ok) throw new Error('Couldn’t fetch ' + f + ' (' + r.status + ')');
+        root.file(f, await r.blob());
+      }
+      var blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+      download(slug(c.identity.districtShort) + '-tech-tools-kit.zip', blob);
+      saveKeysLocally(c);
+      ok('<b>Kit downloaded.</b> Unzip it anywhere and open <code>index.html</code>. To sign in to Microsoft 365 from the tools, host the folder on a web server (or <code>http://localhost</code>) that matches your app registration’s redirect URI.');
+    } catch (e) { alertBox('Couldn’t build the zip: ' + e.message + '. Use Download config instead.'); }
+    btn.disabled = false; btn.textContent = 'Download kit';
+  };
+
+  $('btnImport').onclick = function () { $('importFile').click(); };
+  $('importFile').addEventListener('change', function () {
+    var f = this.files[0]; this.value = ''; if (!f) return;
+    f.text().then(function (t) {
+      var m = t.match(/KIT_CONFIG\s*=\s*(\{[\s\S]*\})\s*;?\s*$/);
+      var c = JSON.parse(m ? m[1] : t);
+      if (!c.identity || !c.brand) throw new Error('missing sections');
+      loadState(c);
+      ok('<b>Loaded ' + esc(f.name) + '.</b> Review each step, then save.');
+    }).catch(function () { alertBox('That file isn’t a kit-config.js created by this setup page.'); });
+  });
+  $('btnReset').onclick = function () {
+    if (!window.confirm('Clear everything and start from a blank setup?')) return;
+    Kit.clearBrowserConfig();
+    var c = JSON.parse(JSON.stringify(DEFAULTS));
+    ['districtName', 'districtShort', 'authorName', 'authorTitle', 'supportEmail', 'logFolder'].forEach(function (k) { c.identity[k] = ''; });
+    c.brand.primary = ''; c.brand.secondary = '';
+    loadState(c); go(0);
+  };
+
+  function loadState(c) {
+    state = JSON.parse(JSON.stringify(c));
+    state.ai = state.ai || {};
+    images.logo = state.brand.logo; images.watermark = state.brand.watermark;
+    keys.primary = (c.ai && c.ai.keys && c.ai.keys[c.ai.provider]) || KitAI.getKey(state.ai.provider) || '';
+    keys.fallback = state.ai.fallbackProvider ? ((c.ai.keys && c.ai.keys[c.ai.fallbackProvider]) || KitAI.getKey(state.ai.fallbackProvider) || '') : '';
+    document.querySelectorAll('[data-path]').forEach(function (el) { el.value = get(state, el.dataset.path) || ''; });
+    $('aiKey').value = keys.primary; $('fbKey').value = keys.fallback;
+    $('aiModel').value = state.ai.model || ''; $('fbModel').value = state.ai.fallbackModel || '';
+    var wmv = !state.brand.watermark || state.brand.watermark === 'logo' ? 'logo' : state.brand.watermark === 'none' ? 'none' : 'custom';
+    document.querySelector('input[name=wm][value=' + wmv + ']').checked = true;
+    $('wmDrop').style.display = wmv === 'custom' ? '' : 'none';
+    $('logoName').textContent = images.logo && images.logo !== DEFAULTS.brand.logo ? 'Current logo (click to replace)' : 'Drop a logo here or click to browse';
+    var ks = state.ai.keyStorage || 'browser';
+    state.ai.keyStorage = ks;
+    document.querySelector('input[name=keyStore][value=' + ks + ']').checked = true;
+    $('keyStoreWarn').style.display = ks === 'config' ? '' : 'none';
+    if (!state.ai.provider || !P[state.ai.provider]) state.ai.provider = 'anthropic';
+    $('fbDetails').open = !!state.ai.fallbackProvider;
+    syncPickers(); renderProviders(); refresh();
+  }
+
+  if (LOCKED) { var ap = $('btnApply').closest('.save-opt'); if (ap) ap.style.display = 'none'; }
+  loadState(state);
+  if (START_BLANK) { $('primaryHex').value = ''; $('secondaryHex').value = ''; state.brand.primary = ''; state.brand.secondary = ''; syncPickers(); refresh(); }
+  renderSteps();
+})();
+</script>
+</body>
+</html>
