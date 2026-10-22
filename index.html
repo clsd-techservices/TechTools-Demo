@@ -174,6 +174,11 @@
             <div class="card-desc">Turn rough notes, scripts, or an old doc into a finished SOP, runbook, or reference, then file it in your knowledge repository or export it to Word.</div>
             <div class="card-foot"><span class="pill green">Live</span><span class="pill blue">AI</span><span class="card-ver">v1.0</span><span class="card-arrow">&rarr;</span></div>
           </a>
+          <a class="card" href="tools/cookbook/index.html" style="--cc:#e67e22" data-tags="cookbook recipes book andrew taylor packt graph powershell scripts library examples github search">
+            <div class="card-head"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/><path d="M9 7h7M9 11h5"/></svg></div><div class="card-title">Cookbook Recipe Browser</div></div>
+            <div class="card-desc">Every script from the Microsoft Intune Cookbook companion code, searchable by chapter, platform and Graph endpoint, with copy and download.</div>
+            <div class="card-foot"><span class="pill green">Live</span><span class="card-ver">v1.0</span><span class="card-arrow">&rarr;</span></div>
+          </a>
         </div>
 
         <!-- KIT -->
@@ -256,7 +261,7 @@ if (!isDemo) { document.getElementById('setupTitle').textContent = 'Kit Setup'; 
 
 // widgets
 const W = [
-  ['Intune tools', '4', 'Autopilot · Remediations · Win32 · Docs', '#e67e22'],
+  ['Intune tools', '5', 'Autopilot · Remediations · Win32 · Docs · Cookbook', '#e67e22'],
   ['Ready-made scripts', '6', 'detection + remediation pairs', '#1abc9c'],
   ['Installer types', String(8), 'recognised without AI', '#8b5cf6'],
   [isDemo ? 'Sample devices' : 'AI provider', isDemo ? '10' : (KitAI.providers[Kit.config.ai?.provider]?.label || '—').split(' ')[0], isDemo ? 'scripted import outcomes' : (KitAI.getKey(Kit.config.ai?.provider) ? 'key saved in this browser' : 'asks for a key on first use'), 'var(--brand-pale)']

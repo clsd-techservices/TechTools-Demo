@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cookbook Recipe Browser · {{portalName}}</title>
+<!--
+  Cookbook Recipe Browser
+  Every script from the companion code of "Microsoft Intune Cookbook" (Andrew Taylor, Packt),
+  searchable by chapter, platform and Graph endpoint. Data: recipes.js (build/make_cookbook.py).
+  Copyright (c) 2026 Scott Boyer, Systems Coordinator, CLSD Technology Services. MIT License (see LICENSE).
+-->
+<link rel="stylesheet" href="../../assets/kit-theme-dark.css"/>
+<script src="../../kit-config.js"></script>
+<script src="../../kit-brand.js"></script>
+<script src="../../kit-demo.js"></script>
+<script src="recipes.js"></script>
+<style>
+  .back-btn{font-size:12px;font-weight:700;color:var(--brand-pale);text-decoration:none;padding:5px 12px;background:rgba(var(--brand-pale-rgb),.10);border:1px solid rgba(var(--brand-pale-rgb),.30);border-radius:6px;white-space:nowrap;flex-shrink:0}
+  .back-btn:hover{background:rgba(var(--brand-pale-rgb),.2);color:var(--text-primary)}
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .repo-link{font-size:12px;font-weight:700;color:var(--text-secondary);text-decoration:none;padding:5px 12px;border:1px solid var(--border-glass);border-radius:var(--radius-full);white-space:nowrap}
+  .repo-link:hover{color:var(--text-primary);border-color:var(--border-glass-bright)}
+  .tt-main{padding:var(--space-6, 24px) var(--space-4, 16px)}
+  .wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+  .mono-label{display:block;font-size:10px;font-family:var(--font-mono);color:var(--brand-pale);letter-spacing:1.8px;text-transform:uppercase}
+
+  /* hero */
+  .hero{display:grid;grid-template-columns:1fr 330px;gap:20px;padding:22px 24px}
+  .hero h1{margin:6px 0 2px;font-size:26px;line-height:1.15;color:var(--text-primary)}
+  .hero .by{color:var(--text-secondary);font-size:13.5px}
+  .hero p{color:var(--text-secondary);font-size:13.5px;line-height:1.55;margin:12px 0 0;max-width:640px}
+  .stats{display:flex;gap:22px;flex-wrap:wrap;margin-top:16px}
+  .stat b{display:block;font-size:24px;color:var(--text-primary);line-height:1.1}
+  .stat span{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px}
+  .start{background:rgba(var(--brand-rgb),.18);border:1px solid var(--border-glass-bright);border-radius:var(--radius-lg);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+  .start h3{margin:0;font-size:14px;color:var(--text-primary)}
+  .start ol{margin:0;padding-left:18px;color:var(--text-secondary);font-size:13px;line-height:1.55}
+  .start ol a{color:var(--brand-pale);cursor:pointer;text-decoration:underline}
+
+  /* toolbar */
+  .toolbar{display:flex;flex-direction:column;gap:12px;padding:14px 18px}
+  .search{position:relative}
+  .search input{width:100%;padding-left:38px;font-size:15px;height:44px}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--text-muted)}
+  .search kbd{position:absolute;right:12px;top:50%;transform:translateY(-50%);font:11px var(--font-mono);color:var(--text-muted);border:1px solid var(--border-glass);border-radius:4px;padding:1px 6px}
+  .filters{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+  .fgroup{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .fgroup > span{font-size:10px;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1.4px;text-transform:uppercase;margin-right:2px}
+  .chip{font:600 12px var(--font-ui);color:var(--text-secondary);background:var(--glass-input);border:1px solid var(--border-glass);border-radius:var(--radius-full);padding:5px 12px;cursor:pointer;transition:all var(--transition-fast);white-space:nowrap}
+  .chip:hover{border-color:var(--border-glass-bright);color:var(--text-primary)}
+  .chip.on{background:rgba(var(--brand-rgb),.35);border-color:var(--brand-pale);color:var(--text-primary)}
+  .chip.session{border-color:rgba(251,191,36,.45);color:#fcd34d}
+  .chip.session.on{background:rgba(251,191,36,.18);border-color:#fbbf24;color:#fde68a}
+
+  /* body */
+  .body{display:grid;grid-template-columns:270px 1fr;gap:16px;align-items:start}
+  .chapters{padding:10px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+  .chap{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:var(--radius-md);padding:7px 8px;color:var(--text-secondary);font:500 12.5px/1.3 var(--font-ui);cursor:pointer}
+  .chap:hover{background:var(--glass-panel-hover);color:var(--text-primary)}
+  .chap.on{background:rgba(var(--brand-rgb),.32);border-color:var(--border-glass-bright);color:var(--text-primary)}
+  .chap .n{font:700 11px var(--font-mono);color:var(--brand-pale);text-align:center}
+  .chap .c{font:600 11px var(--font-mono);color:var(--text-muted)}
+  .chap.dim{opacity:.4}
+  .results-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:2px 4px 10px;color:var(--text-secondary);font-size:13px}
+  .results-head b{color:var(--text-primary)}
+  .clear{background:none;border:0;color:var(--brand-pale);font:600 12px var(--font-ui);cursor:pointer;text-decoration:underline}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+  .rc{display:flex;flex-direction:column;gap:8px;text-align:left;background:var(--glass-card);border:1px solid var(--border-glass);border-radius:var(--radius-lg);padding:14px 15px;cursor:pointer;color:inherit;font:inherit;transition:all var(--transition-fast);min-height:150px}
+  .rc:hover,.rc:focus-visible{border-color:var(--brand-pale);transform:translateY(-1px);box-shadow:var(--shadow-blue);outline:none}
+  .rc .top{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .tag{font:700 10.5px var(--font-mono);letter-spacing:.4px;padding:2px 7px;border-radius:5px;background:rgba(var(--brand-pale-rgb),.12);color:var(--brand-pale);white-space:nowrap}
+  .tag.plat{background:rgba(255,255,255,.06);color:var(--text-secondary)}
+  .tag.kind-Report{background:rgba(52,211,115,.12);color:#6ee7a1}
+  .tag.kind-Supporting{background:rgba(255,255,255,.06);color:var(--text-muted)}
+  .tag.ses{background:rgba(251,191,36,.14);color:#fcd34d}
+  .rc h3{margin:0;font-size:14.5px;line-height:1.3;color:var(--text-primary)}
+  .rc p{margin:0;font-size:12.5px;line-height:1.45;color:var(--text-secondary);flex:1}
+  .rc .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;font:11px var(--font-mono);color:var(--text-muted)}
+  .meth{display:inline-flex;gap:4px;flex-wrap:wrap}
+  .m{font:700 10px var(--font-mono);padding:1px 5px;border-radius:4px}
+  .m-GET{background:rgba(52,211,115,.15);color:#6ee7a1}.m-POST{background:rgba(90,143,245,.18);color:#93b4ff}
+  .m-PATCH,.m-PUT{background:rgba(251,191,36,.15);color:#fcd34d}.m-DELETE{background:rgba(248,113,113,.15);color:#fca5a5}
+  mark{background:rgba(251,191,36,.35);color:inherit;border-radius:2px;padding:0 1px}
+  .empty{padding:40px 20px;text-align:center;color:var(--text-muted)}
+
+  /* blogs */
+  details.blogs summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;padding:14px 18px;font-weight:700;color:var(--text-primary)}
+  details.blogs summary::-webkit-details-marker{display:none}
+  details.blogs summary span{font-weight:500;color:var(--text-muted);font-size:12.5px}
+  .bloglist{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 14px;padding:0 18px 18px}
+  .bloglist a{color:var(--text-secondary);font-size:12.5px;text-decoration:none;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bloglist a:hover{color:var(--brand-pale)}
+
+  /* detail modal */
+  .ov{position:fixed;inset:0;z-index:5000;display:none;align-items:flex-start;justify-content:center;padding:28px 16px;background:var(--bg-overlay);backdrop-filter:blur(6px);overflow:auto}
+  .ov.open{display:flex}
+  .dm{width:min(1040px,100%);background:var(--glass-modal);border:1px solid var(--border-glass-bright);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);backdrop-filter:var(--blur-modal)}
+  .dm-head{display:flex;gap:14px;align-items:flex-start;padding:20px 22px 14px;border-bottom:1px solid var(--border-glass)}
+  .dm-head h2{margin:6px 0 4px;font-size:21px;color:var(--text-primary);line-height:1.25}
+  .dm-head .sub{color:var(--text-secondary);font-size:13.5px;line-height:1.5}
+  .dm-head .ch{font:12px var(--font-mono);color:var(--text-muted)}
+  .dm-nav{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+  .dm-body{display:grid;grid-template-columns:300px 1fr;gap:0}
+  .dm-side{padding:16px 18px;border-right:1px solid var(--border-glass);display:flex;flex-direction:column;gap:16px}
+  .dm-side h4{margin:0 0 8px}
+  .calls{display:flex;flex-direction:column;gap:6px}
+  .call{display:flex;gap:6px;align-items:flex-start;font:11.5px/1.4 var(--font-mono);color:var(--text-secondary);word-break:break-all}
+  .call .m{flex-shrink:0;margin-top:1px}
+  .checks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+  .checks li{font-size:12.5px;color:var(--text-secondary);line-height:1.45;padding-left:20px;position:relative}
+  .checks li::before{content:"";position:absolute;left:2px;top:6px;width:9px;height:9px;border-radius:2px;border:1.5px solid var(--brand-pale)}
+  .checks li.warn::before{border-color:#fbbf24}
+  .checks a{color:var(--brand-pale);cursor:pointer}
+  .dm-actions{display:flex;flex-direction:column;gap:8px}
+  .dm-code{min-width:0;display:flex;flex-direction:column}
+  .codebar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-glass);font:12px var(--font-mono);color:var(--text-muted)}
+  .code{margin:0;max-height:62vh;overflow:auto;padding:12px 0;font:12.5px/1.6 var(--font-mono);color:#d6e2ff;background:rgba(2,7,16,.55);border-bottom-right-radius:var(--radius-xl);counter-reset:ln;tab-size:4}
+  .code .l{display:block;padding:0 16px 0 58px;position:relative;white-space:pre}
+  .code .l::before{counter-increment:ln;content:counter(ln);position:absolute;left:0;width:44px;text-align:right;color:#4a5f82;user-select:none}
+  .k-c{color:#6f86ab;font-style:italic}.k-s{color:#9be3a6}.k-v{color:#f6c177}.k-cmd{color:#7fb6ff}.k-kw{color:#e39bf2}.k-n{color:#f2a37a}.k-p{color:#8fd3e8}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;transition:all .2s;background:var(--glass-modal);border:1px solid var(--border-glass-bright);color:var(--text-primary);padding:9px 16px;border-radius:var(--radius-full);font-size:13px;z-index:6000;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%)}
+  .lic{white-space:pre-wrap;font:12px/1.5 var(--font-mono);color:var(--text-secondary);padding:18px 22px;margin:0}
+
+  @media (max-width: 980px){
+    .hero{grid-template-columns:1fr}
+    .body{grid-template-columns:1fr}
+    .chapters{position:static;max-height:none;display:flex;gap:6px;overflow-x:auto;padding:8px}
+    .chap{grid-template-columns:auto auto;width:auto;white-space:nowrap;flex-shrink:0}
+    .chap .t{display:none}
+    .dm-body{grid-template-columns:1fr}
+    .dm-side{border-right:0;border-bottom:1px solid var(--border-glass)}
+    .code{border-bottom-left-radius:var(--radius-xl)}
+  }
+  @media (max-width: 640px){
+    .repo-link{display:none}
+    .hero{padding:18px}
+    .hero h1{font-size:22px}
+    .dm-head{flex-direction:column}
+    .dm-nav{margin-left:0}
+    .search kbd{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="tt-app">
+
+  <header class="tt-header">
+    <a href="../../index.html" class="back-btn">&larr; {{portalName}}</a>
+    <img src="../../assets/kit-logo.svg" alt="{{districtShort}} logo" class="tt-header__logo" style="height:36px;width:auto;max-width:120px;object-fit:contain"/>
+    <div class="tt-header__divider"></div>
+    <div>
+      <div class="tt-header__title">Cookbook Recipe Browser</div>
+      <div class="tt-header__subtitle">Every script from the Microsoft Intune Cookbook, searchable</div>
+    </div>
+    <span class="tt-header__badge">v1.0</span>
+    <div class="header-right"><a class="repo-link" id="repoLink" target="_blank" rel="noopener">GitHub repo &#8599;</a></div>
+  </header>
+
+  <main class="tt-main">
+    <div class="wrap">
+
+      <section class="tt-card hero">
+        <div>
+          <span class="mono-label">Companion code</span>
+          <h1 id="bookTitle">Microsoft Intune Cookbook</h1>
+          <div class="by" id="bookBy"></div>
+          <p>The book walks through Intune in the portal, then shows how to do the same thing with PowerShell and Microsoft Graph. This page indexes all of that code, so you can find the right recipe by what it does, the platform it's for, or the Graph endpoint it calls.</p>
+          <div class="stats" id="stats"></div>
+        </div>
+        <div class="start">
+          <h3>New to the recipes? Start here</h3>
+          <ol>
+            <li><a data-open="c1-install-module-connect-graph">Install the Graph module and connect</a> (Chapter 1)</li>
+            <li>Pick a recipe and replace the placeholders it lists</li>
+            <li>Run it against a test group first</li>
+            <li>Need every result, not just page one? Use the <a data-open="c2-function-getallpagination">pagination helper</a></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="tt-card toolbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input class="tt-input" id="q" type="search" placeholder="Search recipes, Graph endpoints, or code (try: remediation, laps, 7-Zip, deviceHealthScripts)" autocomplete="off" aria-label="Search recipes"/>
+          <kbd>/</kbd>
+        </div>
+        <div class="filters">
+          <div class="fgroup" id="fPlatform"><span>Platform</span></div>
+          <div class="fgroup" id="fKind"><span>Type</span></div>
+          <div class="fgroup"><button class="chip session" id="fSession" aria-pressed="false">&#9733; From today's session</button></div>
+        </div>
+      </section>
+
+      <div class="body">
+        <nav class="tt-card chapters" id="chapters" aria-label="Chapters"></nav>
+        <section>
+          <div class="results-head"><div id="count"></div><button class="clear" id="clearBtn">Clear filters</button></div>
+          <div class="grid" id="grid"></div>
+        </section>
+      </div>
+
+      <details class="tt-card blogs" id="blogs">
+        <summary>Community blogs listed with the book <span id="blogCount"></span></summary>
+        <div class="bloglist" id="blogList"></div>
+      </details>
+
+    </div>
+  </main>
+
+  <footer class="tt-footer">
+    <span>&copy; {{year}} {{districtShort}} {{deptName}} &middot; {{credit}} &middot; MIT License</span>
+    <span>Recipes: <a href="#" id="licLink" style="color:inherit">Packt companion code, MIT License</a> &middot; Cookbook Recipe Browser v1.0</span>
+  </footer>
+</div>
+
+<div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="dmTitle">
+  <div class="dm" id="dm"></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+'use strict';
+const CB = window.COOKBOOK || { recipes: [], chapters: [], blogs: [], book: {} };
+const R = CB.recipes.map((r, i) => ({ ...r, i, graph: r.graph.map(g => ({ ...g, ep: g.ep.replace(/^\/+/, '') })) }));
+const CH = Object.fromEntries(CB.chapters.map(c => [c.n, c.title]));
+const PLATFORMS = ['Windows', 'iOS', 'macOS', 'Android', 'Linux', 'Tenant'];
+const KINDS = [['Configure', 'Configure'], ['Report', 'Report'], ['Supporting file', 'Supporting files']];
+const state = { q: '', ch: 0, plat: '', kind: '', session: false };
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// ── search index ─────────────────────────────────────────
+R.forEach(r => {
+  r.hay = [r.title, r.summary, r.file, r.platform, r.kind, 'chapter ' + r.ch, CH[r.ch], r.session.join(' '),
+           r.graph.map(g => g.ep).join(' ')].join(' ').toLowerCase();
+  r.codeLc = r.code.toLowerCase();
+});
+function terms() { return state.q.toLowerCase().split(/\s+/).filter(Boolean); }
+function score(r, t) {
+  let s = 0;
+  for (const w of t) {
+    if (r.title.toLowerCase().includes(w)) s += 6;
+    else if (r.hay.includes(w)) s += 3;
+    else if (r.codeLc.includes(w)) s += 1;
+    else return -1;
+  }
+  return s;
+}
+function hl(text, t) {
+  let out = esc(text);
+  if (!t.length) return out;
+  const re = new RegExp('(' + t.map(w => esc(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+  return out.replace(re, '<mark>$1</mark>');
+}
+function matches(r, ignore) {
+  if (ignore !== 'ch' && state.ch && r.ch !== state.ch) return false;
+  if (ignore !== 'plat' && state.plat && r.platform !== state.plat) return false;
+  if (ignore !== 'kind' && state.kind && r.kind !== state.kind) return false;
+  if (state.session && !r.session.length) return false;
+  return true;
+}
+
+// ── render ───────────────────────────────────────────────
+function renderChips() {
+  $('fPlatform').innerHTML = '<span>Platform</span>' + [['', 'All'], ...PLATFORMS.map(p => [p, p === 'iOS' ? 'iOS / iPadOS' : p])]
+    .map(([v, l]) => `<button class="chip${state.plat === v ? ' on' : ''}" data-plat="${v}" aria-pressed="${state.plat === v}">${l}</button>`).join('');
+  $('fKind').innerHTML = '<span>Type</span>' + [['', 'All'], ...KINDS]
+    .map(([v, l]) => `<button class="chip${state.kind === v ? ' on' : ''}" data-kind="${v}" aria-pressed="${state.kind === v}">${l}</button>`).join('');
+  $('fSession').classList.toggle('on', state.session);
+  $('fSession').setAttribute('aria-pressed', state.session);
+}
+function renderChapters(t) {
+  const pool = R.filter(r => matches(r, 'ch') && (!t.length || score(r, t) >= 0));
+  const total = pool.length;
+  let h = `<button class="chap${!state.ch ? ' on' : ''}" data-ch="0"><span class="n">&#9776;</span><span class="t">All chapters</span><span class="c">${total}</span></button>`;
+  CB.chapters.forEach(c => {
+    const n = pool.filter(r => r.ch === c.n).length;
+    h += `<button class="chap${state.ch === c.n ? ' on' : ''}${n ? '' : ' dim'}" data-ch="${c.n}" title="${esc(c.title)}"><span class="n">${c.n}</span><span class="t">${esc(c.title)}</span><span class="c">${n}</span></button>`;
+  });
+  $('chapters').innerHTML = h;
+}
+function methods(r) {
+  const c = {};
+  r.graph.forEach(g => { if (g.m) c[g.m] = (c[g.m] || 0) + 1; });
+  return Object.entries(c).map(([m, n]) => `<span class="m m-${m}">${m}${n > 1 ? ' ×' + n : ''}</span>`).join('');
+}
+function render() {
+  const t = terms();
+  renderChips(); renderChapters(t);
+  let list = R.filter(r => matches(r));
+  if (t.length) list = list.map(r => [r, score(r, t)]).filter(x => x[1] >= 0).sort((a, b) => b[1] - a[1] || a[0].i - b[0].i).map(x => x[0]);
+  current = list;
+  const scripts = list.filter(r => r.kind !== 'Supporting file').length;
+  $('count').innerHTML = `<b>${list.length}</b> ${list.length === 1 ? 'recipe' : 'recipes'}` +
+    (state.ch ? ` in Chapter ${state.ch}: ${esc(CH[state.ch])}` : '') + (list.length !== scripts ? ` <span style="color:var(--text-muted)">(${scripts} scripts)</span>` : '');
+  $('clearBtn').style.visibility = (state.q || state.ch || state.plat || state.kind || state.session) ? 'visible' : 'hidden';
+  if (!list.length) { $('grid').innerHTML = `<div class="empty">No recipes match. Try fewer words, or <button class="clear" onclick="resetAll()">clear the filters</button>.</div>`; return; }
+  $('grid').innerHTML = list.map(r => `
+    <button class="rc" data-id="${r.id}">
+      <div class="top"><span class="tag">Ch ${r.ch}</span>${r.platform ? `<span class="tag plat">${esc(r.platform)}</span>` : ''}<span class="tag kind-${r.kind.split(' ')[0]}">${esc(r.kind)}</span>${r.session.map(s => `<span class="tag ses">&#9733; ${esc(s)}</span>`).join('')}</div>
+      <h3>${hl(r.title, t)}</h3>
+      <p>${hl(r.summary, t)}</p>
+      <div class="foot"><span class="meth">${methods(r)}</span><span>${esc(r.file)} · ${r.lines} lines</span></div>
+    </button>`).join('');
+}
+let current = R;
+
+// ── PowerShell / shell highlighting ──────────────────────
+const KW = /^(if|else|elseif|foreach|for|while|do|function|param|return|exit|try|catch|finally|switch|break|continue|in|begin|process|end|throw|then|fi|echo)$/i;
+function highlight(code, lang) {
+  if (lang === 'text') return code.split('\n').map(l => `<span class="l">${esc(l) || ' '}</span>`).join('');
+  const tok = /(<#[\s\S]*?#>|#[^\n]*)|(@"[\s\S]*?\n"@|@'[\s\S]*?\n'@|"(?:[^"`]|`.)*"|'[^']*')|(\$[\w:]+|\$\{[^}]+\})|(\b[A-Z][a-z]+-[A-Za-z]+\b)|(-[A-Za-z][\w]*\b)|(\b\d+(?:\.\d+)?\b)|(\b[a-zA-Z_]\w*\b)/g;
+  let out = '', last = 0, m;
+  while ((m = tok.exec(code))) {
+    out += esc(code.slice(last, m.index));
+    const [s, c, str, v, cmd, p, n, w] = m;
+    if (c) out += `<span class="k-c">${esc(c)}</span>`;
+    else if (str) out += `<span class="k-s">${esc(str).replace(/\$[\w:]+/g, x => `<span class="k-v">${x}</span>`)}</span>`;
+    else if (v) out += `<span class="k-v">${esc(v)}</span>`;
+    else if (cmd) out += `<span class="k-cmd">${esc(cmd)}</span>`;
+    else if (p) out += `<span class="k-p">${esc(p)}</span>`;
+    else if (n) out += `<span class="k-n">${esc(n)}</span>`;
+    else if (w) out += KW.test(w) ? `<span class="k-kw">${esc(w)}</span>` : esc(w);
+    last = tok.lastIndex;
+  }
+  out += esc(code.slice(last));
+  // split into lines, keeping spans balanced per line
+  const lines = []; let open = [];
+  out.split('\n').forEach(line => {
+    const pre = open.join('');
+    const tags = line.match(/<span class="[^"]+">|<\/span>/g) || [];
+    tags.forEach(tg => { if (tg === '</span>') open.pop(); else open.push(tg); });
+    lines.push(`<span class="l">${pre}${line || ' '}${'</span>'.repeat(open.length)}</span>`);
+  });
+  return lines.join('');
+}
+
+// ── detail view ──────────────────────────────────────────
+let openId = null;
+function checklist(r) {
+  const items = [];
+  if (r.kind !== 'Supporting file' && r.ch !== 1 && /Invoke-MgGraphRequest|Get-Mg|New-Mg|Update-Mg/i.test(r.code))
+    items.push(`Connect to Graph first: <a data-open="c1-install-module-connect-graph">Install the module and connect</a>`);
+  r.placeholders.forEach(p => items.push({ warn: true, t: 'Replace: ' + esc(p) }));
+  if (/\/assign\b/i.test(r.code)) items.push('It assigns to a group. Point it at a test group before production');
+  if (r.kind === 'Report') items.push('Read-only: it reads data and writes a report, nothing in the tenant changes');
+  if (r.graph.some(g => /^beta\//.test(g.ep))) items.push('Uses the Graph <b>beta</b> endpoint, which can change without notice');
+  if (!items.length) items.push('Read it through before you run it');
+  return items.map(i => typeof i === 'string' ? `<li>${i}</li>` : `<li class="warn">${i.t}</li>`).join('');
+}
+function openRecipe(id, push = true) {
+  const r = R.find(x => x.id === id); if (!r) return;
+  openId = id;
+  const idx = current.indexOf(r);
+  $('dm').innerHTML = `
+    <div class="dm-head">
+      <div style="min-width:0">
+        <div class="top" style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag">Chapter ${r.ch}</span>${r.platform ? `<span class="tag plat">${esc(r.platform)}</span>` : ''}<span class="tag kind-${r.kind.split(' ')[0]}">${esc(r.kind)}</span>${r.session.map(s => `<span class="tag ses">&#9733; ${esc(s)}</span>`).join('')}</div>
+        <h2 id="dmTitle">${esc(r.title)}</h2>
+        <div class="sub">${esc(r.summary)}</div>
+        <div class="ch">${esc(CH[r.ch])} · ${esc(r.path)}</div>
+      </div>
+      <div class="dm-nav">
+        <button class="tt-btn tt-btn--ghost tt-btn--icon" onclick="step(-1)" ${idx > 0 ? '' : 'disabled'} aria-label="Previous recipe">&#8592;</button>
+        <button class="tt-btn tt-btn--ghost tt-btn--icon" onclick="step(1)" ${idx >= 0 && idx < current.length - 1 ? '' : 'disabled'} aria-label="Next recipe">&#8594;</button>
+        <button class="tt-btn tt-btn--ghost tt-btn--icon" onclick="closeRecipe()" aria-label="Close">&#10005;</button>
+      </div>
+    </div>
+    <div class="dm-body">
+      <aside class="dm-side">
+        ${r.graph.length ? `<div><h4 class="mono-label">Graph calls</h4><div class="calls">${r.graph.map(g => `<div class="call">${g.m ? `<span class="m m-${g.m}">${g.m}</span>` : ''}<span>${esc(g.ep)}</span></div>`).join('')}</div></div>` : ''}
+        <div><h4 class="mono-label">Before you run it</h4><ul class="checks">${checklist(r)}</ul></div>
+        <div class="dm-actions">
+          <button class="tt-btn tt-btn--primary" onclick="copyCode()">&#10697; Copy script</button>
+          <button class="tt-btn tt-btn--secondary" onclick="downloadCode()">&#8681; Download ${esc(r.file)}</button>
+          <a class="tt-btn tt-btn--ghost" href="${esc(r.url)}" target="_blank" rel="noopener">Open on GitHub &#8599;</a>
+        </div>
+      </aside>
+      <div class="dm-code">
+        <div class="codebar"><span>${esc(r.file)}</span><span>${r.lines} lines</span></div>
+        <pre class="code" tabindex="0" aria-label="Script source">${highlight(r.code, r.lang)}</pre>
+      </div>
+    </div>`;
+  $('ov').classList.add('open'); document.body.style.overflow = 'hidden';
+  $('ov').scrollTop = 0;
+  if (push) history.replaceState(null, '', '#r=' + encodeURIComponent(id));
+}
+function closeRecipe() { $('ov').classList.remove('open'); document.body.style.overflow = ''; openId = null; history.replaceState(null, '', location.pathname + location.search); }
+function step(d) { const i = current.findIndex(r => r.id === openId); const n = current[i + d]; if (n) openRecipe(n.id); }
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 1800); }
+function copyCode() {
+  const r = R.find(x => x.id === openId); if (!r) return;
+  const done = () => toast('Copied ' + r.file);
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(r.code).then(done, fallback); else fallback();
+  function fallback() { const ta = document.createElement('textarea'); ta.value = r.code; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { toast('Copy failed. Select the code and copy it.'); } ta.remove(); }
+}
+function downloadCode() {
+  const r = R.find(x => x.id === openId); if (!r) return;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([r.code], { type: 'text/plain' })); a.download = r.file;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function showLicense() {
+  $('dm').innerHTML = `<div class="dm-head"><div><span class="mono-label">License</span><h2 id="dmTitle">Microsoft Intune Cookbook companion code</h2><div class="sub">Scripts by Andrew Taylor, published by Packt, used under the MIT License below.</div></div><div class="dm-nav"><button class="tt-btn tt-btn--ghost tt-btn--icon" onclick="closeRecipe()" aria-label="Close">&#10005;</button></div></div><pre class="lic">${esc(CB.book.license || 'MIT License')}</pre>`;
+  $('ov').classList.add('open'); document.body.style.overflow = 'hidden';
+}
+
+// ── events ───────────────────────────────────────────────
+function resetAll() { Object.assign(state, { q: '', ch: 0, plat: '', kind: '', session: false }); $('q').value = ''; render(); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-open],[data-id],[data-ch],[data-plat],[data-kind]');
+  if (!t) return;
+  if (t.dataset.open) { e.preventDefault(); openRecipe(t.dataset.open); }
+  else if (t.dataset.id) openRecipe(t.dataset.id);
+  else if (t.dataset.ch != null) { state.ch = +t.dataset.ch; render(); }
+  else if (t.dataset.plat != null) { state.plat = t.dataset.plat; render(); }
+  else if (t.dataset.kind != null) { state.kind = t.dataset.kind; render(); }
+});
+$('fSession').onclick = () => { state.session = !state.session; render(); };
+$('clearBtn').onclick = resetAll;
+$('licLink').onclick = e => { e.preventDefault(); showLicense(); };
+let qt; $('q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value.trim(); render(); }, 90); });
+$('ov').addEventListener('click', e => { if (e.target === $('ov')) closeRecipe(); });
+document.addEventListener('keydown', e => {
+  if ($('ov').classList.contains('open')) {
+    if (e.key === 'Escape') closeRecipe();
+    else if (e.key === 'ArrowLeft' && openId) step(-1);
+    else if (e.key === 'ArrowRight' && openId) step(1);
+    return;
+  }
+  if (e.key === '/' && document.activeElement !== $('q')) { e.preventDefault(); $('q').focus(); }
+});
+
+// ── init ─────────────────────────────────────────────────
+(function init() {
+  const b = CB.book;
+  $('repoLink').href = b.repo || '#';
+  $('bookBy').textContent = `by ${b.author} · ${b.publisher} · companion code on GitHub, MIT License`;
+  const scripts = R.filter(r => r.kind !== 'Supporting file').length;
+  const calls = R.reduce((n, r) => n + r.graph.length, 0);
+  $('stats').innerHTML = [[scripts, 'scripts'], [CB.chapters.length, 'chapters'], [calls, 'Graph calls'], [CB.blogs.length, 'community blogs']]
+    .map(([n, l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('');
+  $('blogCount').textContent = `${CB.blogs.length} sites`;
+  $('blogList').innerHTML = CB.blogs.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener" title="${esc(x.url)}">${esc(x.name)}</a>`).join('');
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get('q')) { state.q = h.get('q'); $('q').value = state.q; }
+  if (h.get('session') === '1') state.session = true;
+  render();
+  if (h.get('r')) openRecipe(h.get('r'), false);
+  window.addEventListener('hashchange', () => {
+    const p = new URLSearchParams(location.hash.slice(1));
+    if (p.get('r') && p.get('r') !== openId) openRecipe(p.get('r'), false);
+  });
+
+  if (window.KitDemo && KitDemo.active) {
+    KitDemo.panel({
+      sections: [
+        { title: 'Open a recipe', chips: [
+          { label: 'Remediation: low disk space', hint: 'Ch 12', onClick: () => openRecipe('c12-add-remediation') },
+          { label: 'Detection pair', hint: 'Ch 12', onClick: () => openRecipe('c12-detect') },
+          { label: '7-Zip detection scripts', hint: 'Ch 12', onClick: () => openRecipe('c12-app-detection-examples') },
+          { label: 'Win32, end to end', hint: 'Ch 11', onClick: () => openRecipe('c11-create-deploy-win32') },
+          { label: 'Update rings', hint: 'Ch 4', onClick: () => openRecipe('c4-create-assign-update-rings') },
+          { label: 'Windows LAPS', hint: 'Ch 3', onClick: () => openRecipe('c3-windows-laps-all-in-one') }
+        ] },
+        { title: 'Filter', actions: [
+          { label: "★ Show today's session recipes", onClick: () => { closeRecipe(); resetAll(); state.session = true; render(); } },
+          { label: '🔎 Search "remediation"', onClick: () => { closeRecipe(); resetAll(); $('q').value = state.q = 'remediation'; render(); } }
+        ] }
+      ],
+      onReset: () => { closeRecipe(); resetAll(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    });
+  }
+})();
+</script>
+</body>
+</html>

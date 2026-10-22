@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Documentation Agent · {{portalName}}</title>
+<link rel="stylesheet" href="../../assets/kit-theme-dark.css"/>
+<script src="../../kit-config.js"></script>
+<script src="../../kit-brand.js"></script>
+<script src="../../kit-demo.js"></script>
+<script src="presets.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" defer></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js" defer></script>
+<style>
+    /* ── Page layout ── */
+  .tool-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── Field label (mono uppercase) ── */
+  .field-mono-label {
+    display: block;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--brand-pale);
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* ── Provider tabs ── */
+  .provider-bar {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .provider-bar > span {
+    font-size: 10px; font-family: var(--font-mono);
+    color: var(--text-muted); letter-spacing: 1.5px;
+    text-transform: uppercase; white-space: nowrap; flex-shrink: 0;
+  }
+  .provider-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .provider-tab {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--glass-input); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md); padding: 7px 14px;
+    font-size: 12px; font-family: var(--font-mono); color: var(--text-muted);
+    cursor: pointer; transition: all var(--transition-fast); user-select: none;
+  }
+  .provider-tab:hover { border-color: var(--border-glass-bright); color: var(--text-secondary); }
+  .provider-tab.active {
+    border-color: var(--brand-mid); background: rgba(var(--brand-rgb),0.2);
+    color: var(--brand-pale); box-shadow: 0 0 10px rgba(var(--brand-rgb),0.2);
+  }
+  .provider-tab .pdot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-muted); transition: background var(--transition-fast); flex-shrink: 0;
+  }
+  .provider-tab.active .pdot { background: var(--brand-pale); }
+  .provider-free {
+    font-size: 9px; font-family: var(--font-mono); padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--color-success-bg); color: var(--color-success);
+    border: 1px solid rgba(52,211,115,0.3);
+    text-transform: uppercase; letter-spacing: 0.8px;
+  }
+
+  /* ── Keys bar ── */
+  .keys-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-size: 11px; font-family: var(--font-mono);
+  }
+  .keys-ok { color: var(--color-success); }
+  .keys-provider { color: var(--text-secondary); }
+  .keys-override {
+    margin-left: auto; color: var(--text-muted); cursor: pointer;
+    text-decoration: underline dotted; font-size: 10px;
+  }
+  .keys-override:hover { color: var(--brand-pale); }
+  .override-row {
+    display: none; gap: 10px; align-items: center; flex-wrap: wrap;
+    padding: 12px 16px; margin-top: -8px;
+    background: var(--glass-input); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md); font-size: 12px; font-family: var(--font-mono);
+  }
+  .override-row.visible { display: flex; }
+  .override-row label { color: var(--text-muted); white-space: nowrap; }
+  .override-row input {
+    flex: 1; min-width: 200px;
+    background: var(--glass-input); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md); color: var(--text-primary);
+    font-family: var(--font-mono); font-size: 12px;
+    padding: 7px 12px; outline: none; transition: border-color var(--transition-fast);
+  }
+  .override-row input:focus { border-color: var(--border-glass-focus); }
+
+  /* ── Example pills ── */
+  .examples { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .example-pill {
+    background: rgba(var(--brand-rgb),0.12); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-full); padding: 5px 13px;
+    font-size: 12px; color: var(--text-muted);
+    cursor: pointer; transition: all var(--transition-fast); font-family: var(--font-mono);
+  }
+  .example-pill:hover {
+    border-color: var(--brand-mid); color: var(--brand-pale);
+    background: rgba(var(--brand-rgb),0.2);
+  }
+
+  /* ── Toggle chips ── */
+  .options-row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  .chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--glass-input); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md); padding: 8px 16px;
+    font-size: 12px; cursor: pointer; transition: all var(--transition-fast);
+    user-select: none; font-family: var(--font-mono); color: var(--text-muted);
+  }
+  .chip.active {
+    border-color: var(--brand-mid); background: rgba(var(--brand-rgb),0.2);
+    color: var(--brand-pale); box-shadow: 0 0 12px rgba(var(--brand-rgb),0.15);
+  }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); transition: background var(--transition-fast); }
+  .chip.active .dot { background: var(--brand-pale); }
+
+  /* ── Full-width generate button ── */
+  .btn-generate {
+    width: 100%; margin-top: 20px; padding: 13px;
+    height: auto; font-size: 15px;
+  }
+
+  /* ── Spinner ── */
+  .spinner {
+    width: 15px; height: 15px;
+    border: 2px solid rgba(255,255,255,0.25);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.7s linear infinite; display: none; flex-shrink: 0;
+  }
+  .spinner.active { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Fade up ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Summary card ── */
+  .summary-card {
+    animation: fadeUp 0.3s ease both;
+  }
+  .summary-card .sum-label {
+    display: block; font-size: 10px; font-family: var(--font-mono);
+    color: var(--brand-pale); letter-spacing: 1.8px;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+
+  /* ── Script blocks ── */
+  .script-block {
+    animation: fadeUp 0.3s ease both;
+  }
+  .script-block-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-glass);
+    background: rgba(var(--brand-rgb),0.12);
+  }
+  .script-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; font-family: var(--font-mono);
+    font-weight: 500; color: var(--text-secondary);
+  }
+  .tt-output { max-height: 440px; border-radius: 0; border: none; }
+
+  .copy-btn {
+    background: transparent; border: 1px solid var(--border-glass);
+    color: var(--text-muted); font-family: var(--font-mono); font-size: 11px;
+    padding: 5px 12px; border-radius: var(--radius-md); cursor: pointer;
+    transition: all var(--transition-fast); display: flex; align-items: center; gap: 6px;
+  }
+  .copy-btn:hover  { border-color: var(--brand-mid); color: var(--brand-pale); }
+  .copy-btn.copied { border-color: var(--color-success); color: var(--color-success); }
+
+  /* ── Script type badges ── */
+  .badge-detect    { background: var(--color-success-bg); color: var(--color-success); border: 1px solid rgba(52,211,115,0.3); }
+  .badge-remediate { background: rgba(var(--brand-rgb),0.2); color: var(--brand-pale); border: 1px solid var(--border-glass-bright); }
+
+  /* ── Push to Intune button ── */
+  .btn-push-intune {
+    width: 100%; padding: 13px; height: auto; font-size: 15px;
+    background: rgba(52,211,115,0.12);
+    color: var(--color-success);
+    border-color: rgba(52,211,115,0.35);
+    animation: fadeUp 0.4s ease both;
+  }
+  .btn-push-intune:hover:not(:disabled) {
+    background: rgba(52,211,115,0.2);
+    box-shadow: 0 0 20px rgba(52,211,115,0.2);
+    border-color: rgba(52,211,115,0.6);
+    transform: translateY(-1px);
+  }
+
+  /* ── Output section visibility ── */
+  .output-section { display: none; }
+  .output-section.visible { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Error/hosting alert ── */
+  .tt-alert { margin-bottom: 0; }
+
+  /* ── Modal open/close ── */
+  .tt-modal-overlay { display: none; }
+  .tt-modal-overlay.open { display: flex; }
+  .tt-modal { max-width: 580px; max-height: 90vh; overflow-y: auto; }
+  .tt-modal::-webkit-scrollbar { width: 4px; }
+  .tt-modal::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 2px; }
+
+  /* ── Modal body padding ── */
+  .tt-modal__body { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Run-as / schedule / check opts ── */
+  .toggle-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .toggle-opt {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--glass-input); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md); padding: 9px 12px;
+    font-size: 12px; font-family: var(--font-mono); color: var(--text-muted);
+    cursor: pointer; transition: all var(--transition-fast); user-select: none; text-align: center;
+  }
+  .toggle-opt:hover { border-color: var(--border-glass-bright); color: var(--text-secondary); }
+  .toggle-opt.active {
+    border-color: var(--brand-mid); background: rgba(var(--brand-rgb),0.2); color: var(--brand-pale);
+  }
+  .toggle-opt.active-green {
+    border-color: rgba(52,211,115,0.4); background: var(--color-success-bg); color: var(--color-success);
+  }
+  .toggle-opt input { display: none; }
+
+  /* ── Group search ── */
+  .group-search-wrap { position: relative; }
+  .group-results {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--glass-modal); border: 1px solid var(--border-glass-bright);
+    border-radius: var(--radius-md); max-height: 180px; overflow-y: auto;
+    z-index: 200; display: none;
+    box-shadow: var(--shadow-lg);
+  }
+  .group-results.open { display: block; }
+  .group-result-item {
+    padding: 9px 14px; font-size: 12px; font-family: var(--font-mono);
+    color: var(--text-secondary); cursor: pointer; transition: background var(--transition-fast);
+    border-bottom: 1px solid var(--border-glass);
+  }
+  .group-result-item:last-child { border-bottom: none; }
+  .group-result-item:hover { background: rgba(var(--brand-rgb),0.2); color: var(--brand-pale); }
+  .group-result-item.loading { color: var(--text-muted); cursor: default; }
+  .group-selected {
+    display: flex; align-items: center; gap: 8px; margin-top: 8px;
+    background: rgba(var(--brand-rgb),0.15); border: 1px solid var(--border-glass-bright);
+    border-radius: var(--radius-md); padding: 8px 12px;
+    font-size: 12px; font-family: var(--font-mono); color: var(--brand-pale);
+  }
+  .group-selected .clear-group {
+    margin-left: auto; cursor: pointer; color: var(--text-muted); font-size: 14px; transition: color var(--transition-fast);
+  }
+  .group-selected .clear-group:hover { color: var(--color-error); }
+  .no-group-note { font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); margin-top: 6px; }
+
+  /* ── Push result ── */
+  .push-result { display: none; }
+  .push-result.visible { display: block; }
+  .push-result a { color: var(--brand-pale); }
+
+  /* ── Modal push btn ── */
+  .btn-modal-push {
+    flex: 2; height: auto; padding: 11px; font-size: 14px;
+    background: rgba(52,211,115,0.12); color: var(--color-success);
+    border-color: rgba(52,211,115,0.35);
+  }
+  .btn-modal-push:hover:not(:disabled) {
+    background: rgba(52,211,115,0.22); box-shadow: 0 0 16px rgba(52,211,115,0.2);
+    border-color: rgba(52,211,115,0.6); transform: translateY(-1px);
+  }
+
+  /* ── Kit additions ── */
+  .back-btn{font-size:12px;font-weight:700;color:var(--brand-pale);text-decoration:none;padding:5px 12px;background:rgba(var(--brand-pale-rgb),.10);border:1px solid rgba(var(--brand-pale-rgb),.30);border-radius:6px;white-space:nowrap;flex-shrink:0}
+  .back-btn:hover{background:rgba(var(--brand-pale-rgb),.2);color:var(--text-primary)}
+  .tt-main { padding: var(--space-6) var(--space-4); }
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .mode-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:var(--radius-full);border:1px solid var(--border-glass);color:var(--text-secondary);white-space:nowrap}
+  .mode-chip .d{width:7px;height:7px;border-radius:50%}
+  .mode-live .d{background:var(--color-success);box-shadow:0 0 6px var(--color-success)}
+  .mode-demo .d{background:var(--color-warning);box-shadow:0 0 6px var(--color-warning)}
+  .mode-offline .d{background:var(--text-muted)}
+  .keys-bar a, .keys-bar button.linkish { color: var(--text-muted); cursor: pointer; text-decoration: underline dotted; font-size: 10px; background: none; border: 0; font-family: var(--font-mono); padding: 0; }
+  .keys-bar a:hover, .keys-bar button.linkish:hover { color: var(--brand-pale); }
+  .keys-warn { color: var(--color-warning); }
+  .example-pill.preset::before { content: "\2605 "; color: var(--accent); }
+  .gen-meta { font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); margin-top: 8px; }
+  .script-actions { display: flex; gap: 6px; }
+  .demo-hint { font-size: 12px; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
+  .demo-hint b { color: var(--text-secondary); }
+  .caret::after { content: "\258C"; animation: blink 1s steps(1) infinite; color: var(--brand-pale); }
+  @keyframes blink { 50% { opacity: 0; } }
+  .offline-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 640px) { .offline-actions { grid-template-columns: 1fr; } .header-right .mode-chip { display: none; } }
+  .tt-modal-overlay { position: fixed; inset: 0; z-index: 5000; align-items: center; justify-content: center; padding: 16px; background: var(--bg-overlay); backdrop-filter: blur(6px); }
+  /* ── Documentation Agent layout ── */
+  .tool-wrap { max-width: 1180px; }
+  .da-grid { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .da-grid { grid-template-columns: 1fr; } }
+  .da-side { display: flex; flex-direction: column; gap: 14px; }
+  .da-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .side-title { font: 600 10px var(--font-mono); letter-spacing: 1.8px; text-transform: uppercase; color: var(--brand-pale); margin-bottom: 10px; }
+  .mode-list { display: grid; gap: 6px; }
+  .mode-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px 11px; border-radius: var(--radius-md); border: 1px solid var(--border-glass); background: var(--glass-input); color: var(--text-secondary); cursor: pointer; font-family: var(--font-ui); transition: all var(--transition-fast); }
+  .mode-item:hover { border-color: var(--border-glass-bright); color: var(--text-primary); }
+  .mode-item.active { border-color: var(--brand-mid); background: rgba(var(--brand-rgb), .22); color: var(--text-primary); }
+  .mode-item .mi { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+  .mode-item b { display: block; font-size: 13px; font-weight: 600; }
+  .mode-item small { display: block; font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .dtype-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dtype { padding: 5px 10px; border-radius: var(--radius-full); border: 1px solid var(--border-glass); background: var(--glass-input); color: var(--text-muted); font: 600 11.5px var(--font-ui); cursor: pointer; }
+  .dtype:hover { color: var(--text-primary); border-color: var(--border-glass-bright); }
+  .dtype.active { background: rgba(var(--brand-rgb), .45); border-color: var(--brand-pale); color: var(--text-primary); }
+  .prov-select { width: 100%; }
+  .prov-meta { font: 11px var(--font-mono); color: var(--text-muted); margin-top: 8px; line-height: 1.6; }
+
+  /* repository */
+  .repo-count { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+  .repo-count b { font-size: 28px; font-weight: 700; color: var(--text-primary); line-height: 1; transition: color .4s; }
+  .repo-count b.bump { color: var(--color-success); }
+  .repo-count span { font-size: 12px; color: var(--text-muted); }
+  .repo-cats { display: grid; gap: 4px; }
+  .repo-cat { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--text-secondary); padding: 5px 8px; border-radius: 6px; background: rgba(255,255,255,.03); cursor: pointer; border: 1px solid transparent; }
+  .repo-cat:hover { border-color: var(--border-glass); color: var(--text-primary); }
+  .repo-cat .n { font: 11px var(--font-mono); color: var(--text-muted); }
+  .repo-cat.new { border-color: rgba(52,211,153,.45); background: rgba(52,211,153,.10); }
+  .repo-list { display: none; margin: 4px 0 6px 8px; padding-left: 8px; border-left: 1px solid var(--border-glass); }
+  .repo-list.open { display: grid; gap: 3px; }
+  .repo-doc { font-size: 11.5px; color: var(--text-muted); line-height: 1.4; padding: 2px 0; background: none; border: 0; text-align: left; font-family: var(--font-ui); cursor: default; }
+  .repo-doc.has { color: var(--text-secondary); cursor: pointer; text-decoration: underline dotted; }
+  .repo-doc.fresh { color: var(--color-success); }
+
+  /* sources */
+  .drop { border: 1.5px dashed var(--border-glass-bright); border-radius: var(--radius-lg); padding: 18px; text-align: center; cursor: pointer; transition: all var(--transition-fast); position: relative; }
+  .drop:hover, .drop.over { border-color: var(--brand-pale); background: rgba(var(--brand-rgb), .10); }
+  .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .drop b { display: block; font-size: 13px; color: var(--text-primary); }
+  .drop small { font-size: 11.5px; color: var(--text-muted); }
+  .src-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .src { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: var(--radius-full); background: var(--glass-input); border: 1px solid var(--border-glass); font-size: 12px; color: var(--text-secondary); }
+  .src button { background: none; border: 0; color: var(--text-muted); cursor: pointer; font-size: 12px; padding: 0 4px; }
+  .src.err { border-color: rgba(248,113,113,.5); color: var(--color-error); }
+
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+
+  /* progress */
+  .steps { display: none; gap: 8px; margin: 4px 0 14px; }
+  .steps.on { display: grid; }
+  .step { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--text-muted); }
+  .step .sd { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--text-muted); flex-shrink: 0; }
+  .step.active { color: var(--text-primary); }
+  .step.active .sd { border-color: var(--brand-pale); background: var(--brand-pale); box-shadow: 0 0 8px var(--brand-pale); animation: pulse 1s ease-in-out infinite; }
+  .step.done { color: var(--text-secondary); }
+  .step.done .sd { border-color: var(--color-success); background: var(--color-success); }
+  @keyframes pulse { 50% { opacity: .4; } }
+
+  /* output */
+  .out-head { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; padding: 16px 20px; border-bottom: 1px solid var(--border-glass); }
+  .out-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  .out-meta { font: 11px var(--font-mono); color: var(--text-muted); margin-top: 4px; }
+  .out-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .out-actions .tt-btn { padding: 7px 12px; font-size: 12px; }
+  .saved-note { display: none; margin: 14px 20px 0; }
+  .saved-note.on { display: flex; }
+
+  /* the rendered document: looks like the printed template */
+  .doc-page { margin: 18px 20px 22px; background: #fff; color: #1A1E2E; border-radius: 10px; padding: 34px 40px; font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+  @media (max-width: 640px) { .doc-page { padding: 22px 18px; margin: 14px 10px; } }
+  .doc-band { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; margin-bottom: 18px; border-bottom: 3px solid var(--brand); }
+  .doc-band img { height: 34px; width: auto; max-width: 110px; object-fit: contain; }
+  .doc-band .org { font-size: 12px; font-weight: 700; color: var(--brand); letter-spacing: .06em; text-transform: uppercase; }
+  .doc-band .dt { margin-left: auto; font-size: 11px; color: #5b6275; text-transform: uppercase; letter-spacing: .08em; }
+  .doc-page h1 { font-size: 24px; color: var(--brand); margin: 0 0 14px; line-height: 1.25; }
+  .doc-page h2 { font-size: 17px; color: var(--brand); margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #dfe3ec; }
+  .doc-page h3 { font-size: 14.5px; color: #1A1E2E; margin: 16px 0 6px; }
+  .doc-page p { margin: 0 0 10px; }
+  .doc-page ul, .doc-page ol { margin: 0 0 12px; padding-left: 24px; }
+  .doc-page li { margin: 3px 0; }
+  .doc-page code { font-family: Consolas, 'Cascadia Code', monospace; font-size: 12.5px; background: #eef1f7; color: #1A1E2E; padding: 1px 5px; border-radius: 4px; word-break: break-word; }
+  .doc-page pre { background: #0f172a; color: #dbe4ff; border-radius: 8px; padding: 12px 14px; overflow-x: auto; margin: 0 0 14px; }
+  .doc-page pre code { background: none; color: inherit; padding: 0; font-size: 12px; white-space: pre; }
+  .doc-page table { width: 100%; border-collapse: collapse; margin: 0 0 14px; font-size: 13px; }
+  .doc-page th { background: var(--brand); color: #fff; text-align: left; padding: 7px 10px; font-weight: 700; }
+  .doc-page td { padding: 7px 10px; border-bottom: 1px solid #e3e7ef; vertical-align: top; }
+  .doc-page tr:nth-child(even) td { background: #f6f8fc; }
+  .doc-page table.meta th { display: none; }
+  .doc-page table.meta td { background: none !important; border-bottom: 1px solid #eef0f5; padding: 4px 10px; }
+  .doc-page table.meta td:first-child { width: 150px; color: #5b6275; }
+  .doc-page blockquote { margin: 0 0 12px; padding: 10px 14px; border-left: 4px solid var(--brand-pale); background: #f1f5ff; border-radius: 0 6px 6px 0; }
+  .doc-page hr { border: 0; border-top: 1px solid #dfe3ec; margin: 18px 0; }
+  .doc-foot { margin-top: 26px; padding-top: 10px; border-top: 1px solid #dfe3ec; font-size: 11px; color: #6b7280; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .doc-page.caret > :last-child::after { content: "\258C"; color: var(--brand); animation: blink 1s steps(1) infinite; }
+
+  @media print {
+    body, .tt-app { background: #fff !important; }
+    .tt-app::before, .tt-header, .ttdemo-banner, .ttkit-banner, .da-side, #inputCard, #srcCard, .out-head, .saved-note, .tt-footer, .ttdemo-fab, .ttdemo-panel, #errorMsg { display: none !important; }
+    .tt-main, .tool-wrap, .da-grid, .da-main, #outputCard { display: block !important; padding: 0 !important; margin: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; }
+    .doc-page { box-shadow: none; margin: 0; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="tt-app">
+
+  <header class="tt-header">
+    <a href="../../index.html" class="back-btn">&larr; {{portalName}}</a>
+    <img src="../../assets/kit-logo.svg" alt="{{districtShort}} logo" class="tt-header__logo" style="height:36px;width:auto;max-width:120px;object-fit:contain"/>
+    <div class="tt-header__divider"></div>
+    <div>
+      <div class="tt-header__title">Documentation Agent</div>
+      <div class="tt-header__subtitle">Rough notes, scripts and screenshots in. Finished documentation out.</div>
+    </div>
+    <span class="tt-header__badge">v1.0</span>
+    <div class="header-right"><span class="mode-chip" id="modeChip"><span class="d"></span><span id="modeText"></span></span></div>
+  </header>
+
+  <main class="tt-main">
+    <div class="tool-wrap">
+      <div class="da-grid">
+
+        <!-- ── SIDEBAR ── -->
+        <aside class="da-side">
+          <div class="tt-card"><div class="tt-card__body" style="padding:16px">
+            <div class="side-title">Mode</div>
+            <div class="mode-list" id="modeList"></div>
+          </div></div>
+
+          <div class="tt-card"><div class="tt-card__body" style="padding:16px">
+            <div class="side-title">Document type</div>
+            <div class="dtype-row" id="dtypeRow"></div>
+          </div></div>
+
+          <div class="tt-card"><div class="tt-card__body" style="padding:16px">
+            <div class="side-title">Knowledge repository</div>
+            <div class="repo-count"><b id="repoTotal">0</b><span>documents</span></div>
+            <div class="repo-cats" id="repoCats"></div>
+          </div></div>
+
+          <div class="tt-card"><div class="tt-card__body" style="padding:16px">
+            <div class="side-title">AI provider</div>
+            <div class="provider-tabs" id="providerTabs" style="flex-direction:column;align-items:stretch"></div>
+            <div class="keys-bar" id="keysBar" style="margin-top:10px;flex-wrap:wrap"></div>
+          </div></div>
+        </aside>
+
+        <!-- ── MAIN ── -->
+        <div class="da-main">
+          <div class="tt-card" id="srcCard">
+            <div class="tt-card__header"><span class="tt-card__title" style="font-size:14px;">&#128206; Source files <span style="font-weight:400;color:var(--text-muted);font-size:12px">(optional)</span></span></div>
+            <div class="tt-card__body">
+              <div class="drop" id="drop">
+                <input type="file" id="fileInput" multiple accept=".txt,.md,.ps1,.psm1,.csv,.log,.json,.xml,.reg,.bat,.cmd,.docx" aria-label="Add source files"/>
+                <b>Drop files here or click to browse</b>
+                <small>TXT · MD · PS1 · CSV · LOG · JSON · DOCX. Read in your browser, never uploaded anywhere but your AI provider.</small>
+              </div>
+              <div class="src-list" id="srcList"></div>
+            </div>
+          </div>
+
+          <div class="tt-card" id="inputCard">
+            <div class="tt-card__header"><span class="tt-card__title" style="font-size:14px;" id="panelTitle"></span></div>
+            <div class="tt-card__body">
+              <div class="field">
+                <label class="field-mono-label" for="docTitle">Document title</label>
+                <input type="text" class="tt-input" id="docTitle" placeholder="e.g. Google Chrome Enterprise: Win32 App Entry"/>
+              </div>
+              <div class="field">
+                <label class="field-mono-label" for="primaryInput" id="primaryLabel"></label>
+                <textarea class="tt-textarea" id="primaryInput" rows="8" style="resize:vertical;min-height:150px;font-family:var(--font-mono);font-size:12.5px"></textarea>
+              </div>
+              <div class="field">
+                <label class="field-mono-label" for="contextInput" id="contextLabel"></label>
+                <textarea class="tt-textarea" id="contextInput" rows="2" style="resize:vertical;min-height:60px"></textarea>
+              </div>
+              <div class="field">
+                <label class="field-mono-label" for="repoCategory">File it under</label>
+                <select class="tt-input" id="repoCategory"></select>
+              </div>
+
+              <div class="examples" id="examples"></div>
+              <div class="demo-hint" id="demoHint" style="display:none"></div>
+
+              <div class="steps" id="steps" aria-live="polite">
+                <div class="step" id="step1"><span class="sd"></span><span></span></div>
+                <div class="step" id="step2"><span class="sd"></span><span></span></div>
+                <div class="step" id="step3"><span class="sd"></span><span></span></div>
+              </div>
+
+              <button class="tt-btn tt-btn--primary btn-generate" id="generateBtn" onclick="generate()" style="margin-top:14px">
+                <div class="spinner" id="spinner"></div>
+                <span id="btnText">Generate document</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="tt-alert tt-alert--error" id="errorMsg" style="display:none" role="alert"></div>
+
+          <div class="tt-card" id="outputCard" style="display:none">
+            <div class="out-head">
+              <div>
+                <div class="out-title" id="outTitle"></div>
+                <div class="out-meta" id="outMeta"></div>
+              </div>
+              <div class="out-actions">
+                <button class="tt-btn tt-btn--primary" id="saveRepoBtn" onclick="saveToRepo()">&#128193; Save to repository</button>
+                <button class="tt-btn tt-btn--secondary" onclick="exportDocx()">&#8681; Word (.docx)</button>
+                <button class="tt-btn tt-btn--secondary" onclick="window.print()">&#128424; Print / PDF</button>
+                <button class="tt-btn tt-btn--ghost" onclick="downloadMd()">&#8681; .md</button>
+                <button class="tt-btn tt-btn--ghost" id="copyBtn" onclick="copyMd()">&#9112; Copy</button>
+              </div>
+            </div>
+            <div class="tt-alert tt-alert--success saved-note" id="savedNote" role="status"></div>
+            <div class="doc-page" id="docPage"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="tt-footer">
+    <span>&copy; {{year}} {{districtShort}} {{deptName}} &middot; {{credit}} &middot; MIT License</span>
+    <span>Documentation Agent v1.0</span>
+  </footer>
+</div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════
+//  MODE + CONFIG
+// ══════════════════════════════════════════════════════════
+const ID = Kit.config.identity || {};
+const MODE = KitDemo.active ? 'demo' : 'offline';
+const CONFIG_AI = { ...(Kit.config.ai || {}) };
+const PRESETS = (window.DOCAGENT_PRESETS || []).map(p => ({ ...p, input: Kit.fill(p.input), markdown: Kit.fill(p.markdown) }));
+const CATEGORIES = ['Win32 Apps', 'Remediations', 'Autopilot', 'iPad', 'Edge Cases', 'General'];
+const DOC_TYPES = ['SOP', 'Runbook', 'Reference', 'How-To', 'Troubleshooting', 'Policy', 'Script Doc'];
+
+const MODES = {
+  notes:   { icon: '&#128221;', label: 'From notes', desc: 'Bullet points into a full doc', title: '&#128221; From notes',
+             primary: 'Your notes / bullet points', primaryPh: 'Paste notes, shorthand, or a rough draft. Typos are fine.',
+             context: 'Additional context (optional)', contextPh: 'Audience, environment details, anything the agent should know',
+             steps: ['Reading your notes', 'Writing the document', 'Applying the template'], defType: 'SOP' },
+  script:  { icon: '&#9881;&#65039;', label: 'Document a script', desc: 'Paste code, get full docs', title: '&#9881;&#65039; Document a script',
+             primary: 'Paste the script', primaryPh: 'PowerShell, batch, a detection/remediation pair, a registry export…',
+             context: 'What it’s for (optional)', contextPh: 'When it runs, who it targets, known caveats',
+             steps: ['Reading the script', 'Explaining what it does', 'Adding settings and rollback'], defType: 'Script Doc' },
+  runbook: { icon: '&#128203;', label: 'Runbook', desc: 'Step-by-step recurring task', title: '&#128203; Runbook',
+             primary: 'Task or process to document', primaryPh: 'e.g. Importing a new laptop shipment into Autopilot',
+             context: 'Frequency, roles, tools (optional)', contextPh: 'How often, who does it, what access it needs',
+             steps: ['Planning the runbook', 'Writing the steps', 'Adding verification and rollback'], defType: 'Runbook' },
+  rewrite: { icon: '&#9999;&#65039;', label: 'Rewrite / improve', desc: 'Clean up an old doc', title: '&#9999;&#65039; Rewrite / improve',
+             primary: 'Existing documentation', primaryPh: 'Paste the old doc, wiki page, or email thread',
+             context: 'What needs improving (optional)', contextPh: 'e.g. Clearer steps, update for the new portal, add troubleshooting',
+             steps: ['Reading the old doc', 'Rewriting', 'Applying the template'], defType: 'SOP' }
+};
+
+let currentMode = 'notes', currentDocType = 'SOP', currentMd = '', currentTitle = '', currentCat = 'General', currentSaved = false;
+let sources = [];
+
+// ══════════════════════════════════════════════════════════
+//  SIDEBAR: modes, doc types, provider
+// ══════════════════════════════════════════════════════════
+function renderModes() {
+  document.getElementById('modeList').innerHTML = Object.entries(MODES).map(([k, m]) =>
+    `<button type="button" class="mode-item${k === currentMode ? ' active' : ''}" aria-pressed="${k === currentMode}" onclick="setMode('${k}')"><span class="mi">${m.icon}</span><span><b>${m.label}</b><small>${m.desc}</small></span></button>`).join('');
+}
+function setMode(k, keepType) {
+  currentMode = k; const m = MODES[k];
+  renderModes();
+  document.getElementById('panelTitle').innerHTML = m.title;
+  document.getElementById('primaryLabel').textContent = m.primary;
+  document.getElementById('primaryInput').placeholder = m.primaryPh;
+  document.getElementById('contextLabel').textContent = m.context;
+  document.getElementById('contextInput').placeholder = m.contextPh;
+  m.steps.forEach((s, i) => { document.querySelector('#step' + (i + 1) + ' span:last-child').textContent = s; });
+  if (!keepType) setDocType(m.defType);
+  hideError();
+}
+function renderDocTypes() {
+  document.getElementById('dtypeRow').innerHTML = DOC_TYPES.map(t =>
+    `<button type="button" class="dtype${t === currentDocType ? ' active' : ''}" aria-pressed="${t === currentDocType}" onclick="setDocType('${t}')">${t}</button>`).join('');
+}
+function setDocType(t) { currentDocType = t; renderDocTypes(); }
+
+function currentProvider() { return Kit.config.ai.provider; }
+function selectProvider(id) {
+  Kit.config.ai = { ...Kit.config.ai, provider: id, model: id === CONFIG_AI.provider ? CONFIG_AI.model : '' };
+  if (Kit.config.ai.fallbackProvider === id) Kit.config.ai.fallbackProvider = '';
+  renderProviderBar(); renderDemoHint();
+}
+function renderProviderBar() {
+  const P = KitAI.providers, cur = currentProvider();
+  document.getElementById('providerTabs').innerHTML = Object.keys(P).map(k =>
+    `<button type="button" class="provider-tab${k === cur ? ' active' : ''}" aria-pressed="${k === cur}" onclick="selectProvider('${k}')"><div class="pdot"></div> ${esc(P[k].label)}${P[k].free ? ' <span class="provider-free">Free</span>' : ''}</button>`).join('');
+  const has = !!KitAI.getKey(cur);
+  const model = Kit.config.ai.model || P[cur].defaultModel;
+  document.getElementById('keysBar').innerHTML =
+    (has ? `<span class="keys-ok">✓ Key saved in this browser</span>` : `<span class="keys-warn">No key yet</span>`) +
+    `<span class="keys-provider">${esc(model)}</span>` +
+    `<span style="display:flex;gap:12px;width:100%"><button type="button" class="linkish" onclick="changeKey()">${has ? 'change key' : 'add key'}</button>` +
+    (has ? `<button type="button" class="linkish" onclick="forgetKey()">forget key</button>` : '') + `</span>`;
+}
+async function changeKey() { await KitAI.promptForKey(currentProvider(), 'Write documentation with your own AI account.'); renderProviderBar(); renderDemoHint(); }
+function forgetKey() { KitAI.setKey(currentProvider(), ''); renderProviderBar(); renderDemoHint(); }
+
+// ══════════════════════════════════════════════════════════
+//  KNOWLEDGE REPOSITORY
+//  Demo: seeded with sample entries, kept for this tab only.
+//  Kit: a library kept in this browser (export each doc to file it for real).
+// ══════════════════════════════════════════════════════════
+const REPO_KEY = MODE === 'demo' ? 'ttkit.docagent.repo.demo' : 'ttkit.docagent.repo';
+const store = MODE === 'demo' ? 'sessionStorage' : 'localStorage';
+function repoLoad() {
+  try { const v = window[store].getItem(REPO_KEY); if (v) return JSON.parse(v); } catch (e) {}
+  if (MODE !== 'demo') return [];
+  return (window.DOCAGENT_REPO_SEED || []).map(s => ({ ...s, date: Date.now() - s.daysAgo * 864e5 }));
+}
+let repo = repoLoad();
+let openCats = new Set();
+function repoSave() { try { window[store].setItem(REPO_KEY, JSON.stringify(repo)); } catch (e) {} }
+function renderRepo(highlight) {
+  document.getElementById('repoTotal').textContent = repo.length;
+  document.getElementById('repoCats').innerHTML = CATEGORIES.map(c => {
+    const docs = repo.filter(d => d.category === c).sort((a, b) => b.date - a.date);
+    const list = docs.map(d => {
+      const i = repo.indexOf(d);
+      return `<button type="button" class="repo-doc${d.md ? ' has' : ''}${d.fresh ? ' fresh' : ''}" ${d.md ? `onclick="openRepoDoc(${i})"` : 'tabindex="-1"'}>${d.fresh ? '● ' : ''}${esc(d.title)}</button>`;
+    }).join('') || '<span class="repo-doc">Nothing filed yet</span>';
+    return `<div class="repo-cat${c === highlight ? ' new' : ''}" role="button" tabindex="0" aria-expanded="${openCats.has(c)}" onclick="toggleCat('${c}')" onkeydown="if(event.key==='Enter')toggleCat('${c}')"><span>${c}</span><span class="n">${docs.length}</span></div><div class="repo-list${openCats.has(c) ? ' open' : ''}">${list}</div>`;
+  }).join('');
+}
+function toggleCat(c) { openCats.has(c) ? openCats.delete(c) : openCats.add(c); renderRepo(); }
+function openRepoDoc(i) {
+  const d = repo[i];
+  currentMd = d.md; currentTitle = d.title; currentCat = d.category; currentSaved = true;
+  showOutput(d.title, d.meta || '', d.docType);
+  renderDoc(d.md, d.docType);
+  document.getElementById('savedNote').classList.remove('on');
+  document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function saveToRepo() {
+  if (!currentMd) return;
+  const btn = document.getElementById('saveRepoBtn');
+  if (currentSaved) { note('Already in the repository under ' + currentCat + '.'); return; }
+  repo.forEach(d => { d.fresh = false; });
+  repo.push({ title: currentTitle, category: currentCat, docType: currentDocType, date: Date.now(), md: currentMd, meta: document.getElementById('outMeta').textContent, fresh: true });
+  repoSave(); currentSaved = true;
+  openCats.add(currentCat);
+  renderRepo(currentCat);
+  const tot = document.getElementById('repoTotal'); tot.classList.add('bump'); setTimeout(() => tot.classList.remove('bump'), 1600);
+  btn.innerHTML = '&#10003; Saved';
+  note(MODE === 'demo'
+    ? `Filed under ${currentCat}. The repository now has ${repo.length} documents.`
+    : `Filed under ${currentCat} in this browser’s library. Use Word (.docx) to put it in your shared documentation.`);
+}
+function note(t) { const n = document.getElementById('savedNote'); n.textContent = t; n.classList.add('on'); }
+
+// ══════════════════════════════════════════════════════════
+//  SOURCE FILES (read locally)
+// ══════════════════════════════════════════════════════════
+const drop = document.getElementById('drop');
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('over')));
+drop.addEventListener('drop', e => { e.preventDefault(); addFiles(e.dataTransfer.files); });
+document.getElementById('fileInput').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+async function addFiles(list) {
+  for (const f of Array.from(list).slice(0, 10 - sources.length)) {
+    const s = { id: Math.random().toString(36).slice(2), name: f.name, text: '', err: '' };
+    sources.push(s); renderSources();
+    try {
+      if (/\.docx$/i.test(f.name)) {
+        if (!window.mammoth) throw new Error('Word reader didn’t load');
+        s.text = (await mammoth.extractRawText({ arrayBuffer: await f.arrayBuffer() })).value;
+      } else s.text = await f.text();
+      if (s.text.length > 60000) s.text = s.text.slice(0, 60000) + '\n[truncated]';
+    } catch (e) { s.err = e.message || 'Couldn’t read'; }
+    renderSources();
+  }
+}
+function removeSource(id) { sources = sources.filter(s => s.id !== id); renderSources(); }
+function renderSources() {
+  document.getElementById('srcList').innerHTML = sources.map(s =>
+    `<span class="src${s.err ? ' err' : ''}" title="${esc(s.err)}">${s.err ? '⚠' : '📄'} ${esc(s.name)}<button type="button" aria-label="Remove ${esc(s.name)}" onclick="removeSource('${s.id}')">✕</button></span>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+//  EXAMPLES + DEMO HINT
+// ══════════════════════════════════════════════════════════
+function renderExamples() {
+  document.getElementById('examples').innerHTML = PRESETS.map((p, i) =>
+    `<button type="button" class="example-pill${MODE === 'demo' ? ' preset' : ''}" onclick="setExample(${i})">${esc(p.label)}</button>`).join('');
+}
+function setExample(i) {
+  const p = PRESETS[i];
+  setMode(p.mode); setDocType(p.docType);
+  document.getElementById('docTitle').value = p.title;
+  document.getElementById('primaryInput').value = p.input;
+  document.getElementById('contextInput').value = p.context || '';
+  document.getElementById('repoCategory').value = p.category;
+  hideError();
+}
+function renderDemoHint() {
+  const el = document.getElementById('demoHint');
+  if (MODE !== 'demo') { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.innerHTML = KitAI.getKey(currentProvider())
+    ? '<b>★ Examples</b> play back instantly. Anything else you type goes to ' + esc(KitAI.providers[currentProvider()].label) + ' live.'
+    : '<b>★ Examples</b> play back without an API key. To document anything else live, <button type="button" class="linkish" style="color:var(--brand-pale);text-decoration:underline;background:none;border:0;cursor:pointer;font:inherit;padding:0" onclick="changeKey()">add a key</button>.';
+}
+
+// ══════════════════════════════════════════════════════════
+//  GENERATE
+// ══════════════════════════════════════════════════════════
+function showError(m) { const el = document.getElementById('errorMsg'); el.textContent = m; el.style.display = 'flex'; }
+function hideError() { document.getElementById('errorMsg').style.display = 'none'; }
+function setLoading(on) {
+  document.getElementById('generateBtn').disabled = on;
+  document.getElementById('spinner').className = on ? 'spinner active' : 'spinner';
+  document.getElementById('btnText').textContent = on ? 'Writing…' : 'Generate document';
+}
+function setStep(n, state) { const el = document.getElementById('step' + n); el.classList.remove('active', 'done'); if (state) el.classList.add(state); }
+function showSteps(on) { document.getElementById('steps').classList.toggle('on', on); [1, 2, 3].forEach(n => setStep(n, '')); }
+
+function buildPrompt(title, primary, context) {
+  const srcs = sources.filter(s => s.text && !s.err);
+  const how = {
+    notes: `Expand the notes below into a complete, professional ${currentDocType}.`,
+    script: `Write complete technical documentation for the script below as a ${currentDocType}: what it does, how it works, exit codes, required settings, what the user sees, and rollback.`,
+    runbook: `Write a detailed operational runbook: prerequisites, numbered procedure, verification, rollback, and troubleshooting.`,
+    rewrite: `Rewrite and improve the documentation below into the standard format. ${context || 'Make it clearer, more complete, and better structured.'}`
+  }[currentMode];
+  const system = Kit.fill(`You are an expert IT documentation writer for {{districtName}}, a K-12 school district. The environment is Microsoft 365 with Entra ID and Intune.
+Write in plain, direct language for other IT staff. Never invent hostnames, IP addresses, people, or settings that aren't in the input; leave a clear [FILL IN: …] instead.
+
+Always use this Markdown structure:
+# <Document title>
+A two-column metadata table with an empty header row:
+| | |
+|---|---|
+| **Department** | {{publisher}} |
+| **Document type** | <type> |
+| **Author** | {{author}} |
+| **Version** | 1.0 (Draft) |
+## Executive Summary (2 to 4 sentences)
+## <body sections using ## and ###>
+## Notes and Caveats
+## References
+
+Use numbered lists for procedures, fenced code blocks for scripts and commands, and tables for settings. Output only the Markdown document.`);
+  const user = `${how}
+
+Document title: ${title || '(choose a short, specific title)'}
+Document type: ${currentDocType}
+${primary ? `\nInput:\n${primary}\n` : ''}${context && currentMode !== 'rewrite' ? `\nAdditional context:\n${context}\n` : ''}${srcs.map(s => `\n--- SOURCE FILE: ${s.name} ---\n${s.text}\n--- END ---`).join('')}`;
+  return { system, user };
+}
+
+async function generate() {
+  const title = document.getElementById('docTitle').value.trim();
+  const primary = document.getElementById('primaryInput').value.trim();
+  const context = document.getElementById('contextInput').value.trim();
+  if (!primary && !sources.some(s => s.text)) { showError('Add notes, a script, or a source file first, or pick an example.'); return; }
+  hideError();
+  currentCat = document.getElementById('repoCategory').value;
+  const preset = PRESETS.find(p => p.input === primary);
+
+  if (MODE === 'demo' && (preset || !KitAI.getKey(currentProvider()))) {
+    if (!preset) { showError('In demo mode, pick one of the ★ examples, or add an API key to document anything else live.'); return; }
+    setLoading(true); showSteps(true);
+    setStep(1, 'active'); await KitDemo.wait(900);
+    setStep(1, 'done'); setStep(2, 'active'); await KitDemo.wait(1300);
+    currentTitle = title || preset.title;
+    beginOutput(currentTitle, 'Ready-made example (demo playback) · ' + today());
+    await typeDoc(preset.markdown);
+    setStep(2, 'done'); setStep(3, 'active'); await KitDemo.wait(500); setStep(3, 'done');
+    setLoading(false); await KitDemo.wait(400); showSteps(false);
+    return;
+  }
+
+  setLoading(true); showSteps(true); setStep(1, 'active');
+  try {
+    const p = buildPrompt(title, primary, context);
+    await new Promise(r => setTimeout(r, 300));
+    setStep(1, 'done'); setStep(2, 'active');
+    const r = await KitAI.chat({ system: p.system, messages: [{ role: 'user', content: p.user }], maxTokens: 8000, reason: 'The Documentation Agent writes documents with AI.' });
+    let md = r.text.trim().replace(/^```(?:markdown|md)?\s*\n/i, '').replace(/\n```\s*$/, '');
+    if (!md) throw new Error('The AI returned an empty document. Try again or add more detail.');
+    setStep(2, 'done'); setStep(3, 'active');
+    currentTitle = title || (md.match(/^#\s+(.+)$/m) || [])[1] || 'Untitled document';
+    beginOutput(currentTitle, `Generated by ${r.providerLabel} · ${r.model}${r.usedFallback ? ' (fallback)' : ''}${r.truncated ? ' · cut off at the length limit' : ''} · ${today()}`);
+    currentMd = md; renderDoc(md, currentDocType);
+    setStep(3, 'done');
+  } catch (err) {
+    showError(err.message || String(err));
+  } finally {
+    setLoading(false); setTimeout(() => showSteps(false), 600); renderProviderBar();
+  }
+}
+
+function today() { return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); }
+function showOutput(title, meta) {
+  document.getElementById('outTitle').textContent = title;
+  document.getElementById('outMeta').textContent = meta;
+  document.getElementById('outputCard').style.display = '';
+}
+function beginOutput(title, meta) {
+  currentSaved = false; currentMd = '';
+  document.getElementById('saveRepoBtn').innerHTML = '&#128193; Save to repository';
+  document.getElementById('savedNote').classList.remove('on');
+  showOutput(title, meta);
+  document.getElementById('docPage').innerHTML = '';
+  document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+async function typeDoc(md) {
+  const page = document.getElementById('docPage');
+  page.classList.add('caret');
+  const lines = md.split('\n'), total = KitDemo.scale(3200), stepMs = Math.max(12, total / lines.length);
+  for (let i = 1; i <= lines.length; i++) {
+    // don't render half a code block or table
+    const part = lines.slice(0, i).join('\n');
+    if ((part.match(/```/g) || []).length % 2 === 1) continue;
+    renderDoc(part, currentDocType);
+    await new Promise(r => setTimeout(r, stepMs));
+  }
+  page.classList.remove('caret');
+  currentMd = md; renderDoc(md, currentDocType);
+}
+
+// ══════════════════════════════════════════════════════════
+//  MARKDOWN → HTML (the subset the agent is asked to write)
+// ══════════════════════════════════════════════════════════
+function inline(s) {
+  return esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\s][^*]*?)\*/g, '$1<em>$2</em>')
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+function parseMd(md) {
+  // -> blocks: {t:'h',l,text} {t:'p',text} {t:'ul'|'ol',items} {t:'code',lang,text} {t:'table',head,rows} {t:'quote',text} {t:'hr'}
+  const L = md.replace(/\r\n/g, '\n').split('\n'), out = [];
+  for (let i = 0; i < L.length;) {
+    const ln = L[i];
+    if (/^```/.test(ln)) { const lang = ln.slice(3).trim(); const buf = []; i++; while (i < L.length && !/^```/.test(L[i])) buf.push(L[i++]); i++; out.push({ t: 'code', lang, text: buf.join('\n') }); continue; }
+    let m;
+    if ((m = ln.match(/^(#{1,4})\s+(.*)$/))) { out.push({ t: 'h', l: Math.min(m[1].length, 3), text: m[2] }); i++; continue; }
+    if (/^\s*(-{3,}|\*{3,})\s*$/.test(ln)) { out.push({ t: 'hr' }); i++; continue; }
+    if (/^\s*\|/.test(ln)) {
+      const rows = []; while (i < L.length && /^\s*\|/.test(L[i])) rows.push(L[i++]);
+      const cells = r => r.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+      const body = rows.filter(r => !/^\s*\|?\s*:?-{2,}/.test(r)).map(cells);
+      out.push({ t: 'table', head: body[0] || [], rows: body.slice(1) }); continue;
+    }
+    if (/^>\s?/.test(ln)) { const buf = []; while (i < L.length && /^>\s?/.test(L[i])) buf.push(L[i++].replace(/^>\s?/, '')); out.push({ t: 'quote', text: buf.join(' ') }); continue; }
+    if (/^\s*[-*]\s+/.test(ln)) { const items = []; while (i < L.length && /^\s*[-*]\s+/.test(L[i])) items.push(L[i++].replace(/^\s*[-*]\s+/, '')); out.push({ t: 'ul', items }); continue; }
+    if (/^\s*\d+[.)]\s+/.test(ln)) { const items = []; while (i < L.length && /^\s*\d+[.)]\s+/.test(L[i])) items.push(L[i++].replace(/^\s*\d+[.)]\s+/, '')); out.push({ t: 'ol', items }); continue; }
+    if (!ln.trim()) { i++; continue; }
+    const buf = []; while (i < L.length && L[i].trim() && !/^(#{1,4}\s|```|\s*\||>|\s*[-*]\s|\s*\d+[.)]\s)/.test(L[i])) buf.push(L[i++]);
+    out.push({ t: 'p', text: buf.join(' ') });
+  }
+  return out;
+}
+function renderDoc(md, docType) {
+  const tk = Kit.tokens();
+  const html = parseMd(md).map(b => {
+    switch (b.t) {
+      case 'h': return `<h${b.l}>${inline(b.text)}</h${b.l}>`;
+      case 'p': return `<p>${inline(b.text)}</p>`;
+      case 'ul': case 'ol': return `<${b.t}>${b.items.map(x => `<li>${inline(x)}</li>`).join('')}</${b.t}>`;
+      case 'code': return `<pre><code>${esc(b.text)}</code></pre>`;
+      case 'quote': return `<blockquote>${inline(b.text)}</blockquote>`;
+      case 'hr': return '<hr>';
+      case 'table': {
+        const meta = b.head.every(c => !c);
+        return `<table${meta ? ' class="meta"' : ''}><thead><tr>${b.head.map(c => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${b.rows.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      }
+    }
+  }).join('');
+  const logo = document.querySelector('.tt-header__logo');
+  document.getElementById('docPage').innerHTML =
+    `<div class="doc-band">${logo ? `<img src="${esc(logo.getAttribute('src'))}" alt="">` : ''}<span class="org">${esc(tk.publisher || '')}</span><span class="dt">${esc(docType || '')}</span></div>` +
+    html +
+    `<div class="doc-foot"><span>${esc(tk.districtName || '')} · ${esc(tk.publisher || '')}</span><span>${esc(today())}</span></div>`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  EXPORT
+// ══════════════════════════════════════════════════════════
+function fileBase() { return (currentTitle || 'document').replace(/[:/\\?*"<>|]+/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 80); }
+function downloadMd() { if (currentMd) KitDemo.download(fileBase() + '.md', currentMd, 'text/markdown'); }
+function copyMd() {
+  if (!currentMd) return;
+  navigator.clipboard.writeText(currentMd).then(() => {
+    const b = document.getElementById('copyBtn'); b.textContent = '✓ Copied'; setTimeout(() => { b.innerHTML = '&#9112; Copy'; }, 1800);
+  }).catch(() => showError('Couldn’t copy. Use the .md download instead.'));
+}
+async function exportDocx() {
+  if (!currentMd) return;
+  if (!window.docx) { showError('The Word exporter didn’t load (it needs internet access). Use Print / PDF or .md instead.'); return; }
+  const D = window.docx, tk = Kit.tokens();
+  const brand = (getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#1f3f99').replace('#', '');
+  const INK = '1A1E2E', FONT = 'Arial';
+  const runs = (s, base = {}) => {
+    const parts = []; const re = /(\*\*[^*]+\*\*|`[^`]+`)/g; let last = 0, m;
+    while ((m = re.exec(s))) {
+      if (m.index > last) parts.push(new D.TextRun({ text: s.slice(last, m.index), font: FONT, color: INK, ...base }));
+      const t = m[0];
+      parts.push(t.startsWith('**') ? new D.TextRun({ text: t.slice(2, -2), bold: true, font: FONT, color: INK, ...base })
+                                    : new D.TextRun({ text: t.slice(1, -1), font: 'Consolas', color: INK, ...base }));
+      last = m.index + t.length;
+    }
+    if (last < s.length) parts.push(new D.TextRun({ text: s.slice(last), font: FONT, color: INK, ...base }));
+    return parts;
+  };
+  const border = { style: D.BorderStyle.SINGLE, size: 4, color: 'D9DEE8' };
+  const children = [];
+  let olCount = 0;   // each numbered list restarts at 1
+  for (const b of parseMd(currentMd)) {
+    if (b.t === 'h') children.push(new D.Paragraph({ heading: [D.HeadingLevel.HEADING_1, D.HeadingLevel.HEADING_2, D.HeadingLevel.HEADING_3][b.l - 1], spacing: { before: b.l === 1 ? 0 : 240, after: 100 }, children: [new D.TextRun({ text: b.text.replace(/\*\*/g, ''), font: FONT, bold: true, color: b.l < 3 ? brand : INK, size: [40, 28, 24][b.l - 1] })] }));
+    else if (b.t === 'p' || b.t === 'quote') children.push(new D.Paragraph({ spacing: { after: 120 }, indent: b.t === 'quote' ? { left: 360 } : undefined, children: runs(b.text, { size: 22, italics: b.t === 'quote' }) }));
+    else if (b.t === 'ul' || b.t === 'ol') { const inst = ++olCount; b.items.forEach(x => children.push(new D.Paragraph(b.t === 'ul' ? { bullet: { level: 0 }, children: runs(x, { size: 22 }) } : { numbering: { reference: 'num', level: 0, instance: inst }, children: runs(x, { size: 22 }) }))); }
+    else if (b.t === 'code') b.text.split('\n').forEach(x => children.push(new D.Paragraph({ shading: { type: D.ShadingType.CLEAR, fill: 'F1F3F8' }, spacing: { after: 0 }, children: [new D.TextRun({ text: x || ' ', font: 'Consolas', size: 18, color: INK })] })));
+    else if (b.t === 'table') {
+      const meta = b.head.every(c => !c), rows = meta ? b.rows : [b.head, ...b.rows];
+      const ncol = Math.max(...rows.map(r => r.length)); if (!ncol) continue;
+      children.push(new D.Table({
+        width: { size: 9360, type: D.WidthType.DXA }, columnWidths: Array(ncol).fill(Math.floor(9360 / ncol)),
+        rows: rows.map((r, ri) => new D.TableRow({ children: Array.from({ length: ncol }, (_, ci) => new D.TableCell({
+          width: { size: Math.floor(9360 / ncol), type: D.WidthType.DXA },
+          borders: { top: border, bottom: border, left: border, right: border },
+          shading: !meta && ri === 0 ? { type: D.ShadingType.CLEAR, fill: brand } : undefined,
+          margins: { top: 60, bottom: 60, left: 100, right: 100 },
+          children: [new D.Paragraph({ children: runs(r[ci] || '', { size: 20, ...(!meta && ri === 0 ? { bold: true, color: 'FFFFFF' } : {}) }) })]
+        })) }))
+      }));
+      children.push(new D.Paragraph({ children: [] }));
+    } else if (b.t === 'hr') children.push(new D.Paragraph({ border: { bottom: { style: D.BorderStyle.SINGLE, size: 6, color: 'D9DEE8', space: 1 } }, children: [] }));
+  }
+  const doc = new D.Document({
+    styles: { default: { document: { run: { font: FONT, size: 22, color: INK } } } },
+    numbering: { config: [{ reference: 'num', levels: [{ level: 0, format: D.LevelFormat.DECIMAL, text: '%1.', alignment: D.AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] }] },
+    sections: [{
+      properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
+      headers: { default: new D.Header({ children: [new D.Paragraph({ border: { bottom: { style: D.BorderStyle.SINGLE, size: 12, color: brand, space: 4 } }, children: [new D.TextRun({ text: (tk.publisher || '').toUpperCase(), bold: true, font: FONT, size: 18, color: brand }), new D.TextRun({ text: '\t' + currentDocType, font: FONT, size: 18, color: '5B6275' })], tabStops: [{ type: D.TabStopType.RIGHT, position: 9360 }] })] }) },
+      footers: { default: new D.Footer({ children: [new D.Paragraph({ children: [new D.TextRun({ text: `${tk.districtName || ''} · ${today()}\tPage `, font: FONT, size: 16, color: '6B7280' }), new D.TextRun({ children: [D.PageNumber.CURRENT], font: FONT, size: 16, color: '6B7280' })], tabStops: [{ type: D.TabStopType.RIGHT, position: 9360 }] })] }) },
+      children
+    }]
+  });
+  const blob = await D.Packer.toBlob(doc);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileBase() + '.docx';
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+
+// ══════════════════════════════════════════════════════════
+//  UTIL + BOOT
+// ══════════════════════════════════════════════════════════
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function renderMode() {
+  document.getElementById('modeChip').className = 'mode-chip mode-' + MODE;
+  document.getElementById('modeText').textContent = MODE === 'demo' ? 'Demo' : 'Ready';
+}
+document.getElementById('repoCategory').innerHTML = CATEGORIES.map(c => `<option${c === 'General' ? ' selected' : ''}>${c}</option>`).join('');
+
+if (MODE === 'demo') {
+  KitDemo.panel({
+    sections: [
+      { title: 'Play an example', chips: PRESETS.map((p, i) => ({ label: p.label, hint: p.category, onClick: () => { setExample(i); generate(); } })) },
+      { title: 'Repository', actions: [
+        { label: '📁 Save the current document', onClick: () => { if (currentMd) saveToRepo(); } },
+        { label: '↺ Reset the repository to its starting entries', onClick: () => { try { sessionStorage.removeItem(REPO_KEY); } catch (e) {} repo = repoLoad(); openCats.clear(); renderRepo(); } }
+      ] }
+    ],
+    onReset: () => {
+      hideError(); sources = []; renderSources(); currentMd = ''; currentSaved = false;
+      ['docTitle', 'primaryInput', 'contextInput'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('outputCard').style.display = 'none';
+      try { sessionStorage.removeItem(REPO_KEY); } catch (e) {}
+      repo = repoLoad(); openCats.clear(); renderRepo(); setMode('notes');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+}
+renderMode(); setMode('notes'); renderDocTypes(); renderProviderBar(); renderExamples(); renderDemoHint(); renderRepo();
+</script>
+</body>
+</html>

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Remediation Generator · {{portalName}}</title>
+<link rel="stylesheet" href="../../assets/kit-theme-dark.css"/>
+<script src="../../kit-config.js"></script>
+<script src="../../kit-brand.js"></script>
+<script src="../../kit-demo.js"></script>
+<script src="presets.js"></script>
+<style>
+    /* ── Page layout ── */
+  .tool-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── Field label (mono uppercase) ── */
+  .field-mono-label {
+    display: block;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--brand-pale);
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* ── Provider tabs ── */
+  .provider-bar {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .provider-bar > span {
+    font-size: 10px; font-family: var(--font-mono);
+    color: var(--text-muted); letter-spacing: 1.5px;
+    text-transform: uppercase; white-space: nowrap; flex-shrink: 0;
+  }
+  .provider-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .provider-tab {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--glass-input); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md); padding: 7px 14px;
+    font-size: 12px; font-family: var(--font-mono); color: var(--text-muted);
+    cursor: pointer; transition: all var(--transition-fast); user-select: none;
+  }
+  .provider-tab:hover { border-color: var(--border-glass-bright); color: var(--text-secondary); }
+  .provider-tab.active {
+    border-color: var(--brand-mid); background: rgba(var(--brand-rgb),0.2);
+    color: var(--brand-pale); box-shadow: 0 0 10px rgba(var(--brand-rgb),0.2);
+  }
+  .provider-tab .pdot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-muted); transition: background var(--transition-fast); flex-shrink: 0;
+  }
+  .provider-tab.active .pdot { background: var(--brand-pale); }
+  .provider-free {
+    font-size: 9px; font-family: var(--font-mono); padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--color-success-bg); color: var(--color-success);
+    border: 1px solid rgba(52,211,115,0.3);
+    text-transform: uppercase; letter-spacing: 0.8px;
+  }
+
+  /* ── Keys bar ── */
+  .keys-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-size: 11px; font-family: var(--font-mono);
+  }
+  .keys-ok { color: var(--color-success); }
+  .keys-provider { color: var(--text-secondary); }
+  .keys-override {
+    margin-left: auto; color: var(--text-muted); cursor: pointer;
+    text-decoration: underline dotted; font-size: 10px;
+  }
+  .keys-override:hover { color: var(--brand-pale); }
+  .override-row {
+    display: none; gap: 10px; align-items: center; flex-wrap: wrap;
+    padding: 12px 16px; margin-top: -8px;
+    background: var(--glass-input); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md); font-size: 12px; font-family: var(--font-mono);
+  }
+  .override-row.visible { display: flex; }
+  .override-row label { color: var(--text-muted); white-space: nowrap; }
+  .override-row input {
+    flex: 1; min-width: 200px;
+    background: var(--glass-input); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md); color: var(--text-primary);
+    font-family: var(--font-mono); font-size: 12px;
+    padding: 7px 12px; outline: none; transition: border-color var(--transition-fast);
+  }
+  .override-row input:focus { border-color: var(--border-glass-focus); }
+
+  /* ── Example pills ── */
+  .examples { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .example-pill {
+    background: rgba(var(--brand-rgb),0.12); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-full); padding: 5px 13px;
+    font-size: 12px; color: var(--text-muted);
+    cursor: pointer; transition: all var(--transition-fast); font-family: var(--font-mono);
+  }
+  .example-pill:hover {
+    border-color: var(--brand-mid); color: var(--brand-pale);
+    background: rgba(var(--brand-rgb),0.2);
+  }
+
+  /* ── Toggle chips ── */
+  .options-row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  .chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--glass-input); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md); padding: 8px 16px;
+    font-size: 12px; cursor: pointer; transition: all var(--transition-fast);
+    user-select: none; font-family: var(--font-mono); color: var(--text-muted);
+  }
+  .chip.active {
+    border-color: var(--brand-mid); background: rgba(var(--brand-rgb),0.2);
+    color: var(--brand-pale); box-shadow: 0 0 12px rgba(var(--brand-rgb),0.15);
+  }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); transition: background var(--transition-fast); }
+  .chip.active .dot { background: var(--brand-pale); }
+
+  /* ── Full-width generate button ── */
+  .btn-generate {
+    width: 100%; margin-top: 20px; padding: 13px;
+    height: auto; font-size: 15px;
+  }
+
+  /* ── Spinner ── */
+  .spinner {
+    width: 15px; height: 15px;
+    border: 2px solid rgba(255,255,255,0.25);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.7s linear infinite; display: none; flex-shrink: 0;
+  }
+  .spinner.active { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Fade up ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Summary card ── */
+  .summary-card {
+    animation: fadeUp 0.3s ease both;
+  }
+  .summary-card .sum-label {
+    display: block; font-size: 10px; font-family: var(--font-mono);
+    color: var(--brand-pale); letter-spacing: 1.8px;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+
+  /* ── Script blocks ── */
+  .script-block {
+    animation: fadeUp 0.3s ease both;
+  }
+  .script-block-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-glass);
+    background: rgba(var(--brand-rgb),0.12);
+  }
+  .script-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; font-family: var(--font-mono);
+    font-weight: 500; color: var(--text-secondary);
+  }
+  .tt-output { max-height: 440px; border-radius: 0; border: none; }
+
+  .copy-btn {
+    background: transparent; border: 1px solid var(--border-glass);
+    color: var(--text-muted); font-family: var(--font-mono); font-size: 11px;
+    padding: 5px 12px; border-radius: var(--radius-md); cursor: pointer;
+    transition: all var(--transition-fast); display: flex; align-items: center; gap: 6px;
+  }
+  .copy-btn:hover  { border-color: var(--brand-mid); color: var(--brand-pale); }
+  .copy-btn.copied { border-color: var(--color-success); color: var(--color-success); }
+
+  /* ── Script type badges ── */
+  .badge-detect    { background: var(--color-success-bg); color: var(--color-success); border: 1px solid rgba(52,211,115,0.3); }
+  .badge-remediate { background: rgba(var(--brand-rgb),0.2); color: var(--brand-pale); border: 1px solid var(--border-glass-bright); }
+
+  /* ── Push to Intune button ── */
+  .btn-push-intune {
+    width: 100%; padding: 13px; height: auto; font-size: 15px;
+    background: rgba(52,211,115,0.12);
+    color: var(--color-success);
+    border-color: rgba(52,211,115,0.35);
+    animation: fadeUp 0.4s ease both;
+  }
+  .btn-push-intune:hover:not(:disabled) {
+    background: rgba(52,211,115,0.2);
+    box-shadow: 0 0 20px rgba(52,211,115,0.2);
+    border-color: rgba(52,211,115,0.6);
+    transform: translateY(-1px);
+  }
+
+  /* ── Output section visibility ── */
+  .output-section { display: none; }
+  .output-section.visible { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Error/hosting alert ── */
+  .tt-alert { margin-bottom: 0; }
+
+  /* ── Modal open/close ── */
+  .tt-modal-overlay { display: none; }
+  .tt-modal-overlay.open { display: flex; }
+  .tt-modal { max-width: 580px; max-height: 90vh; overflow-y: auto; }
+  .tt-modal::-webkit-scrollbar { width: 4px; }
+  .tt-modal::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 2px; }
+
+  /* ── Modal body padding ── */
+  .tt-modal__body { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Run-as / schedule / check opts ── */
+  .toggle-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .toggle-opt {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--glass-input); border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md); padding: 9px 12px;
+    font-size: 12px; font-family: var(--font-mono); color: var(--text-muted);
+    cursor: pointer; transition: all var(--transition-fast); user-select: none; text-align: center;
+  }
+  .toggle-opt:hover { border-color: var(--border-glass-bright); color: var(--text-secondary); }
+  .toggle-opt.active {
+    border-color: var(--brand-mid); background: rgba(var(--brand-rgb),0.2); color: var(--brand-pale);
+  }
+  .toggle-opt.active-green {
+    border-color: rgba(52,211,115,0.4); background: var(--color-success-bg); color: var(--color-success);
+  }
+  .toggle-opt input { display: none; }
+
+  /* ── Group search ── */
+  .group-search-wrap { position: relative; }
+  .group-results {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--glass-modal); border: 1px solid var(--border-glass-bright);
+    border-radius: var(--radius-md); max-height: 180px; overflow-y: auto;
+    z-index: 200; display: none;
+    box-shadow: var(--shadow-lg);
+  }
+  .group-results.open { display: block; }
+  .group-result-item {
+    padding: 9px 14px; font-size: 12px; font-family: var(--font-mono);
+    color: var(--text-secondary); cursor: pointer; transition: background var(--transition-fast);
+    border-bottom: 1px solid var(--border-glass);
+  }
+  .group-result-item:last-child { border-bottom: none; }
+  .group-result-item:hover { background: rgba(var(--brand-rgb),0.2); color: var(--brand-pale); }
+  .group-result-item.loading { color: var(--text-muted); cursor: default; }
+  .group-selected {
+    display: flex; align-items: center; gap: 8px; margin-top: 8px;
+    background: rgba(var(--brand-rgb),0.15); border: 1px solid var(--border-glass-bright);
+    border-radius: var(--radius-md); padding: 8px 12px;
+    font-size: 12px; font-family: var(--font-mono); color: var(--brand-pale);
+  }
+  .group-selected .clear-group {
+    margin-left: auto; cursor: pointer; color: var(--text-muted); font-size: 14px; transition: color var(--transition-fast);
+  }
+  .group-selected .clear-group:hover { color: var(--color-error); }
+  .no-group-note { font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); margin-top: 6px; }
+
+  /* ── Push result ── */
+  .push-result { display: none; }
+  .push-result.visible { display: block; }
+  .push-result a { color: var(--brand-pale); }
+
+  /* ── Modal push btn ── */
+  .btn-modal-push {
+    flex: 2; height: auto; padding: 11px; font-size: 14px;
+    background: rgba(52,211,115,0.12); color: var(--color-success);
+    border-color: rgba(52,211,115,0.35);
+  }
+  .btn-modal-push:hover:not(:disabled) {
+    background: rgba(52,211,115,0.22); box-shadow: 0 0 16px rgba(52,211,115,0.2);
+    border-color: rgba(52,211,115,0.6); transform: translateY(-1px);
+  }
+
+  /* ── Kit additions ── */
+  .back-btn{font-size:12px;font-weight:700;color:var(--brand-pale);text-decoration:none;padding:5px 12px;background:rgba(var(--brand-pale-rgb),.10);border:1px solid rgba(var(--brand-pale-rgb),.30);border-radius:6px;white-space:nowrap;flex-shrink:0}
+  .back-btn:hover{background:rgba(var(--brand-pale-rgb),.2);color:var(--text-primary)}
+  .tt-main { padding: var(--space-6) var(--space-4); }
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .mode-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:var(--radius-full);border:1px solid var(--border-glass);color:var(--text-secondary);white-space:nowrap}
+  .mode-chip .d{width:7px;height:7px;border-radius:50%}
+  .mode-live .d{background:var(--color-success);box-shadow:0 0 6px var(--color-success)}
+  .mode-demo .d{background:var(--color-warning);box-shadow:0 0 6px var(--color-warning)}
+  .mode-offline .d{background:var(--text-muted)}
+  .keys-bar a, .keys-bar button.linkish { color: var(--text-muted); cursor: pointer; text-decoration: underline dotted; font-size: 10px; background: none; border: 0; font-family: var(--font-mono); padding: 0; }
+  .keys-bar a:hover, .keys-bar button.linkish:hover { color: var(--brand-pale); }
+  .keys-warn { color: var(--color-warning); }
+  .example-pill.preset::before { content: "\2605 "; color: var(--accent); }
+  .gen-meta { font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); margin-top: 8px; }
+  .script-actions { display: flex; gap: 6px; }
+  .demo-hint { font-size: 12px; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
+  .demo-hint b { color: var(--text-secondary); }
+  .caret::after { content: "\258C"; animation: blink 1s steps(1) infinite; color: var(--brand-pale); }
+  @keyframes blink { 50% { opacity: 0; } }
+  .offline-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 640px) { .offline-actions { grid-template-columns: 1fr; } .header-right .mode-chip { display: none; } }
+  .tt-modal-overlay { position: fixed; inset: 0; z-index: 5000; align-items: center; justify-content: center; padding: 16px; background: var(--bg-overlay); backdrop-filter: blur(6px); }
+</style>
+</head>
+<body>
+<div class="tt-app">
+
+  <header class="tt-header">
+    <a href="../../index.html" class="back-btn">&larr; {{portalName}}</a>
+    <img src="../../assets/kit-logo.svg" alt="{{districtShort}} logo" class="tt-header__logo" style="height:36px;width:auto;max-width:120px;object-fit:contain"/>
+    <div class="tt-header__divider"></div>
+    <div>
+      <div class="tt-header__title">Remediation Generator</div>
+      <div class="tt-header__subtitle">Intune detection &amp; remediation scripts from a plain-English description</div>
+    </div>
+    <span class="tt-header__badge">v2.0</span>
+    <div class="header-right"><span class="mode-chip" id="modeChip"><span class="d"></span><span id="modeText"></span></span></div>
+  </header>
+
+  <main class="tt-main">
+    <div class="tool-wrap">
+
+      <!-- Provider selector -->
+      <div class="tt-card">
+        <div class="tt-card__body" style="padding:16px 20px;">
+          <div class="provider-bar">
+            <span>AI Provider</span>
+            <div class="provider-tabs" id="providerTabs"></div>
+          </div>
+          <div class="keys-bar" style="margin-top:14px;" id="keysBar"></div>
+        </div>
+      </div>
+
+      <!-- Input card -->
+      <div class="tt-card">
+        <div class="tt-card__header">
+          <span class="tt-card__title" style="font-size:14px;">Describe the problem</span>
+        </div>
+        <div class="tt-card__body">
+          <label class="sr-only" for="problemInput" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Problem description</label>
+          <textarea class="tt-textarea" id="problemInput" rows="4"
+            placeholder="e.g. Student laptops haven't restarted in weeks and updates are piling up. Restart anything up more than 7 days, with a warning first."
+            style="resize:vertical;min-height:100px;"></textarea>
+
+          <div class="examples" id="examples"></div>
+          <div class="demo-hint" id="demoHint" style="display:none"></div>
+
+          <div class="options-row">
+            <button type="button" class="chip active" id="chip-remediate" aria-pressed="true" onclick="toggleChip(this)">
+              <div class="dot"></div> Remediation script
+            </button>
+            <button type="button" class="chip active" id="chip-detect" aria-pressed="true" onclick="toggleChip(this)">
+              <div class="dot"></div> Detection script
+            </button>
+          </div>
+
+          <button class="tt-btn tt-btn--primary btn-generate" id="generateBtn" onclick="generate()">
+            <div class="spinner" id="spinner"></div>
+            <span id="btnText">Generate scripts</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="tt-alert tt-alert--error" id="errorMsg" style="display:none" role="alert"></div>
+
+      <!-- Output -->
+      <div class="output-section" id="outputSection">
+        <div class="tt-panel summary-card">
+          <span class="sum-label">Summary</span>
+          <span id="summaryText" style="color:var(--text-secondary);font-size:14px;line-height:1.7;"></span>
+          <div class="gen-meta" id="genMeta"></div>
+        </div>
+
+        <div class="tt-card script-block" id="detectBlock">
+          <div class="script-block-header">
+            <div class="script-title"><span class="tt-badge badge-detect">Detection</span> detect.ps1</div>
+            <div class="script-actions">
+              <button class="copy-btn" onclick="copyScript('detectCode', this)">&#9112; Copy</button>
+              <button class="copy-btn" onclick="downloadScript('detect')">&#8681; .ps1</button>
+            </div>
+          </div>
+          <pre class="tt-output" id="detectCode"></pre>
+        </div>
+
+        <div class="tt-card script-block" id="remediateBlock">
+          <div class="script-block-header">
+            <div class="script-title"><span class="tt-badge badge-remediate">Remediation</span> remediate.ps1</div>
+            <div class="script-actions">
+              <button class="copy-btn" onclick="copyScript('remediateCode', this)">&#9112; Copy</button>
+              <button class="copy-btn" onclick="downloadScript('remediate')">&#8681; .ps1</button>
+            </div>
+          </div>
+          <pre class="tt-output" id="remediateCode"></pre>
+        </div>
+
+        <button class="tt-btn tt-btn--secondary btn-push-intune" id="pushIntuneBtn" onclick="openPushModal()">&#9729; Push to Intune</button>
+        <div class="offline-actions" id="offlineActions" style="display:none">
+          <button class="tt-btn tt-btn--secondary" onclick="downloadScript('detect');downloadScript('remediate')">&#8681; Download both scripts</button>
+          <a class="tt-btn tt-btn--ghost" href="https://intune.microsoft.com/#view/Microsoft_Intune_DeviceSettings/DevicesMenu/~/remediations" target="_blank" rel="noopener" style="text-decoration:none;justify-content:center">Open Intune Remediations &rarr;</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="tt-footer">
+    <span>&copy; {{year}} {{districtShort}} {{deptName}} &middot; {{credit}} &middot; MIT License</span>
+    <span>Remediation Generator v2.0</span>
+  </footer>
+</div>
+
+<!-- ── Intune Push Modal ── -->
+<div class="tt-modal-overlay" id="intuneModal">
+  <div class="tt-modal" role="dialog" aria-modal="true" aria-labelledby="pushTitle">
+    <div class="tt-modal__header">
+      <span class="tt-modal__title" id="pushTitle">&#9729; Push to Intune</span>
+      <button class="tt-btn tt-btn--ghost tt-btn--icon" onclick="closeModal()" style="font-size:16px;" aria-label="Close">&#10005;</button>
+    </div>
+    <div class="tt-modal__body">
+      <div class="tt-form-group">
+        <label class="field-mono-label" for="intuneScriptName">Script package name</label>
+        <input type="text" class="tt-input" id="intuneScriptName"/>
+      </div>
+      <div class="tt-form-group">
+        <label class="field-mono-label" for="intuneDescription">Description</label>
+        <textarea class="tt-textarea" id="intuneDescription" rows="2" style="min-height:58px;resize:none;"></textarea>
+      </div>
+      <div class="tt-form-group">
+        <span class="field-mono-label">Run as account</span>
+        <div class="toggle-row">
+          <label class="toggle-opt active" id="runAsSystem" onclick="setRunAs('system')"><input type="radio" name="runAs" value="system" checked/> System</label>
+          <label class="toggle-opt" id="runAsUser" onclick="setRunAs('user')"><input type="radio" name="runAs" value="user"/> User</label>
+        </div>
+      </div>
+      <div class="tt-form-group">
+        <span class="field-mono-label">Options</span>
+        <div class="toggle-row">
+          <label class="toggle-opt" id="opt32bit" onclick="toggleToggleOpt(this)"><input type="checkbox"/> Run as 32-bit</label>
+          <label class="toggle-opt" id="optSigCheck" onclick="toggleToggleOpt(this)"><input type="checkbox"/> Enforce signature check</label>
+        </div>
+      </div>
+      <div class="tt-form-group">
+        <span class="field-mono-label">Run schedule</span>
+        <div class="toggle-row">
+          <label class="toggle-opt active" id="schedOnce" onclick="setSchedule('once')">Run once</label>
+          <label class="toggle-opt" id="schedDaily" onclick="setSchedule('daily')">Daily (1 AM)</label>
+          <label class="toggle-opt" id="schedHourly" onclick="setSchedule('hourly')">Every hour</label>
+        </div>
+      </div>
+      <div class="tt-form-group">
+        <label class="field-mono-label" for="groupSearchInput">Assign to Entra group <span style="font-size:9px;color:var(--text-muted);text-transform:none;letter-spacing:0;font-family:var(--font-ui);margin-left:4px;">(optional)</span></label>
+        <div class="group-search-wrap">
+          <input type="text" class="tt-input" id="groupSearchInput" placeholder="Search for a group..." oninput="debounceGroupSearch(this.value)" onfocus="if(this.value.length>1) openGroupResults()" autocomplete="off"/>
+          <div class="group-results" id="groupResults"></div>
+        </div>
+        <div class="group-selected" id="groupSelected" style="display:none;">
+          <span id="groupSelectedName"></span>
+          <span class="clear-group" onclick="clearGroup()" title="Remove" role="button" aria-label="Remove group">&#10005;</span>
+        </div>
+        <div class="no-group-note">Leave blank to create it unassigned and assign groups in Intune later.</div>
+      </div>
+      <div class="push-result" id="pushResult"></div>
+    </div>
+    <div class="tt-modal__footer">
+      <button class="tt-btn tt-btn--ghost" onclick="closeModal()" style="flex:1;">Cancel</button>
+      <button class="tt-btn tt-btn--secondary btn-modal-push" id="modalPushBtn" onclick="pushToIntune()">
+        <div class="spinner" id="pushSpinner"></div>
+        <span id="pushBtnText">Push to Intune</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════
+//  MODE + CONFIG
+// ══════════════════════════════════════════════════════════
+const MS = Kit.config.microsoft || {};
+const ID = Kit.config.identity || {};
+const MODE = KitDemo.active ? 'demo' : (Kit.isLive() ? 'live' : 'offline');
+const GRAPH_SCOPES = ['https://graph.microsoft.com/DeviceManagementConfiguration.ReadWrite.All', 'https://graph.microsoft.com/Group.Read.All'];
+const PRESETS = (window.REMEDIATION_PRESETS || []).map(p => ({ ...p, detection: Kit.fill(p.detection), remediation: Kit.fill(p.remediation) }));
+const INTUNE_REMEDIATIONS_URL = 'https://intune.microsoft.com/#view/Microsoft_Intune_DeviceSettings/DevicesMenu/~/remediations';
+const CONFIG_AI = { ...(Kit.config.ai || {}) };
+let lastResult = null;   // { detection, remediation, summary }
+let msalApp = null;
+
+// ══════════════════════════════════════════════════════════
+//  AI PROVIDER BAR
+// ══════════════════════════════════════════════════════════
+function currentProvider() { return Kit.config.ai.provider; }
+function selectProvider(id) {
+  // switch for this session only; kit-config.js keeps the district default
+  Kit.config.ai = { ...Kit.config.ai, provider: id, model: id === CONFIG_AI.provider ? CONFIG_AI.model : '' };
+  if (Kit.config.ai.fallbackProvider === id) Kit.config.ai.fallbackProvider = '';
+  renderProviderBar();
+}
+function renderProviderBar() {
+  const P = KitAI.providers, cur = currentProvider();
+  document.getElementById('providerTabs').innerHTML = Object.keys(P).map(k =>
+    `<button type="button" class="provider-tab${k === cur ? ' active' : ''}" aria-pressed="${k === cur}" onclick="selectProvider('${k}')"><div class="pdot"></div> ${esc(P[k].label)}${P[k].free ? ' <span class="provider-free">Free</span>' : ''}</button>`).join('');
+  const has = !!KitAI.getKey(cur);
+  const model = Kit.config.ai.model || P[cur].defaultModel;
+  const fb = Kit.config.ai.fallbackProvider && P[Kit.config.ai.fallbackProvider];
+  document.getElementById('keysBar').innerHTML =
+    (has ? `<span class="keys-ok">✓ Key saved in this browser</span>` : `<span class="keys-warn">No key yet. You’ll be asked the first time you generate.</span>`) +
+    `<span class="keys-provider">${esc(P[cur].label)} · ${esc(model)}${fb ? ' → fallback ' + esc(fb.label) : ''}</span>` +
+    `<span style="margin-left:auto;display:flex;gap:12px"><button type="button" class="linkish" onclick="changeKey()">${has ? 'change key' : 'add key'}</button>` +
+    (has ? `<button type="button" class="linkish" onclick="forgetKey()">forget key</button>` : '') + `</span>`;
+}
+async function changeKey() { await KitAI.promptForKey(currentProvider(), 'Generate Intune scripts with your own AI account.'); renderProviderBar(); renderDemoHint(); }
+function forgetKey() { KitAI.setKey(currentProvider(), ''); renderProviderBar(); renderDemoHint(); }
+
+// ══════════════════════════════════════════════════════════
+//  EXAMPLES + DEMO HINT
+// ══════════════════════════════════════════════════════════
+function renderExamples() {
+  document.getElementById('examples').innerHTML = PRESETS.map((p, i) =>
+    `<button type="button" class="example-pill${MODE === 'demo' ? ' preset' : ''}" onclick="setExample(${i})">${esc(p.label)}</button>`).join('');
+}
+function setExample(i) { document.getElementById('problemInput').value = PRESETS[i].prompt; hideError(); }
+function renderDemoHint() {
+  const el = document.getElementById('demoHint');
+  if (MODE !== 'demo') { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.innerHTML = KitAI.getKey(currentProvider())
+    ? '<b>★ Examples</b> play back instantly. Anything else you type goes to ' + esc(KitAI.providers[currentProvider()].label) + ' live.'
+    : '<b>★ Examples</b> play back without an API key. To generate anything else live, <button type="button" class="linkish" style="color:var(--brand-pale);text-decoration:underline;background:none;border:0;cursor:pointer;font:inherit;padding:0" onclick="changeKey()">add a key</button>.';
+}
+
+// ══════════════════════════════════════════════════════════
+//  GENERATE
+// ══════════════════════════════════════════════════════════
+function toggleChip(el) { el.classList.toggle('active'); el.setAttribute('aria-pressed', el.classList.contains('active')); }
+function showError(msg) { const el = document.getElementById('errorMsg'); el.textContent = msg; el.style.display = 'flex'; }
+function hideError() { document.getElementById('errorMsg').style.display = 'none'; }
+function setLoading(on, label) {
+  document.getElementById('generateBtn').disabled = on;
+  document.getElementById('spinner').className = on ? 'spinner active' : 'spinner';
+  document.getElementById('btnText').textContent = on ? (label || 'Generating…') : 'Generate scripts';
+}
+
+function buildPrompt(problem, wantDetect, wantRemediate) {
+  const types = [wantRemediate && 'remediation', wantDetect && 'detection'].filter(Boolean);
+  return Kit.fill(`You are an expert Microsoft Intune PowerShell engineer for a K-12 school district ({{districtName}}).
+
+Generate Intune-ready PowerShell scripts for the following problem:
+"${problem}"
+
+Required scripts: ${types.join(' and ')}
+
+Rules for ALL scripts:
+- Compatible with the Intune Remediations framework (runs as SYSTEM unless the task clearly needs the user context)
+- PowerShell 5.1 compatible, no external modules unless built into Windows
+- Proper error handling with try/catch
+- Start with a comment block: .SYNOPSIS, .AUTHOR {{author}}, .PUBLISHER {{publisher}}, .VERSION 1.0
+- Use Write-Output for status (Intune captures stdout); remediation scripts also log to $env:ProgramData\\{{logFolder}}\\IntuneLogs\\<ScriptName>.log
+- Focused and production-ready, no interactive prompts
+${wantDetect ? `
+Detection script rules:
+- Exit 0 = compliant (no remediation needed), exit 1 = non-compliant
+- Write-Output a clear status message before exiting` : ''}
+${wantRemediate ? `
+Remediation script rules:
+- Exit 0 = success, exit 1 = failure
+- Write-Output status at each key step` : ''}
+
+Respond ONLY using these exact delimiters and nothing else: no JSON, no markdown fences, no explanation.
+
+##SUMMARY##
+One sentence describing what these scripts do.
+##END_SUMMARY##
+${wantDetect ? `##DETECTION##
+...full detection script...
+##END_DETECTION##` : ''}
+${wantRemediate ? `##REMEDIATION##
+...full remediation script...
+##END_REMEDIATION##` : ''}`);
+}
+function extractBlock(text, tag) {
+  const open = '##' + tag + '##', close = '##END_' + tag + '##';
+  const si = text.indexOf(open), ei = text.indexOf(close);
+  if (si === -1 || ei === -1) return '';
+  return text.slice(si + open.length, ei).trim().replace(/^```(?:powershell|ps1)?\s*\n?/i, '').replace(/\n?```\s*$/, '');
+}
+
+async function generate() {
+  const problem = document.getElementById('problemInput').value.trim();
+  if (!problem) { showError('Describe the problem first, or pick an example.'); return; }
+  const wantRemediate = document.getElementById('chip-remediate').classList.contains('active');
+  const wantDetect = document.getElementById('chip-detect').classList.contains('active');
+  if (!wantRemediate && !wantDetect) { showError('Pick at least one script type.'); return; }
+  hideError();
+  document.getElementById('outputSection').classList.remove('visible');
+
+  const preset = PRESETS.find(p => p.prompt === problem);
+  // Demo mode plays back the ready-made pairs; with a saved key, anything else goes to the AI live
+  if (MODE === 'demo' && (preset || !KitAI.getKey(currentProvider()))) {
+    if (!preset) { showError('In demo mode, pick one of the ★ examples, or add an API key to generate anything else live.'); return; }
+    setLoading(true, 'Thinking…');
+    await KitDemo.wait(1400);
+    await showResult({ summary: preset.summary, detection: wantDetect ? preset.detection : '', remediation: wantRemediate ? preset.remediation : '' }, preset.label, 'Ready-made example (demo playback)', true);
+    setLoading(false);
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const r = await KitAI.chat({ prompt: buildPrompt(problem, wantDetect, wantRemediate), maxTokens: 4000, reason: 'The Remediation Generator writes scripts with AI.' });
+    const parsed = { summary: extractBlock(r.text, 'SUMMARY'), detection: extractBlock(r.text, 'DETECTION'), remediation: extractBlock(r.text, 'REMEDIATION') };
+    if (!parsed.summary && !parsed.detection && !parsed.remediation) throw new Error('The AI response didn’t contain scripts. Try rephrasing the description.');
+    await showResult(parsed, problem, `Generated by ${r.providerLabel} · ${r.model}${r.usedFallback ? ' (fallback)' : ''}`, false);
+  } catch (err) {
+    showError(err.message || String(err));
+  } finally {
+    setLoading(false);
+    renderProviderBar();
+  }
+}
+
+async function typeInto(el, text) {
+  el.classList.add('caret');
+  const total = KitDemo.scale(1600), steps = 40, chunkLen = Math.ceil(text.length / steps);
+  for (let i = 0; i < text.length; i += chunkLen) {
+    el.textContent = text.slice(0, i + chunkLen);
+    await new Promise(r => setTimeout(r, total / steps));
+  }
+  el.textContent = text;
+  el.classList.remove('caret');
+}
+
+async function showResult(parsed, problem, meta, animate) {
+  lastResult = parsed;
+  document.getElementById('summaryText').textContent = parsed.summary || '';
+  document.getElementById('genMeta').textContent = meta;
+  const shortName = problem.replace(/\+/g, ' plus ').replace(/[^a-zA-Z0-9\s-]/g, '').trim().split(/\s+/).slice(0, 6).join('-');
+  document.getElementById('intuneScriptName').value = (ID.districtShort || 'IT') + '-' + shortName;
+  document.getElementById('intuneDescription').value = parsed.summary || problem.slice(0, 120);
+  // the name is built from the first words of `problem` (examples pass their short label)
+  const blocks = [['detect', parsed.detection], ['remediate', parsed.remediation]];
+  blocks.forEach(([k, code]) => { document.getElementById(k + 'Block').style.display = code ? 'block' : 'none'; document.getElementById(k + 'Code').textContent = ''; });
+  const canPush = MODE === 'demo' || MODE === 'live';
+  document.getElementById('pushIntuneBtn').style.display = canPush ? '' : 'none';
+  document.getElementById('offlineActions').style.display = canPush ? 'none' : '';
+  document.getElementById('outputSection').classList.add('visible');
+  for (const [k, code] of blocks) {
+    if (!code) continue;
+    const el = document.getElementById(k + 'Code');
+    if (animate) await typeInto(el, code); else el.textContent = code;
+  }
+}
+
+function copyScript(id, btn) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => {
+    btn.textContent = '✓ Copied'; btn.classList.add('copied');
+    setTimeout(() => { btn.innerHTML = '&#9112; Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+function downloadScript(kind) {
+  const code = document.getElementById(kind + 'Code').textContent;
+  if (!code) return;
+  const base = (document.getElementById('intuneScriptName').value || 'remediation').replace(/[^A-Za-z0-9-]+/g, '-');
+  // UTF-8 BOM so Windows PowerShell 5.1 reads any non-ASCII characters correctly
+  KitDemo.download(`${base}-${kind === 'detect' ? 'Detect' : 'Remediate'}.ps1`, '﻿' + code.replace(/\r?\n/g, '\r\n'), 'text/plain');
+}
+
+// ══════════════════════════════════════════════════════════
+//  GRAPH: live (MSAL) or demo (simulated)
+// ══════════════════════════════════════════════════════════
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s); }); }
+async function getGraphToken() {
+  if (!msalApp) {
+    await loadScript('https://alcdn.msftauth.net/browser/2.38.2/js/msal-browser.min.js');
+    msalApp = new msal.PublicClientApplication({
+      auth: { clientId: MS.clientId, authority: 'https://login.microsoftonline.com/' + MS.tenantId, redirectUri: Kit.url('redirect.html') },
+      cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
+    });
+    await msalApp.initialize();
+    await msalApp.handleRedirectPromise().catch(() => {});
+  }
+  const accounts = msalApp.getAllAccounts(), req = { scopes: GRAPH_SCOPES };
+  if (accounts.length) { req.account = accounts[0]; try { return (await msalApp.acquireTokenSilent(req)).accessToken; } catch (e) {} }
+  return (await msalApp.acquireTokenPopup(req)).accessToken;
+}
+
+const DemoIntune = (() => {
+  const short = ID.districtShort || 'DEMO';
+  const groups = ['All Student Devices', 'All Staff Devices', 'HS Student Devices', 'MS Student Devices', 'Elementary Cart Devices', 'IT Pilot Devices', 'IT Test Devices']
+    .map((n, i) => ({ id: 'demo-group-' + (i + 1), displayName: short + ' - ' + n }));
+  let assignAttempts = {};
+  return {
+    async searchGroups(q) { await KitDemo.wait(450); q = q.toLowerCase(); return groups.filter(g => g.displayName.toLowerCase().includes(q)); },
+    async create(payload) { await KitDemo.wait(1200); const id = 'demo-' + Math.random().toString(16).slice(2, 10) + '-script'; assignAttempts[id] = 0; return { id, ...payload }; },
+    // Scripted: the first assign right after create hits Intune's replication race, the retry succeeds
+    async assign(id) { await KitDemo.wait(900); assignAttempts[id] = (assignAttempts[id] || 0) + 1; if (assignAttempts[id] === 1) { const e = new Error('Processing of the HTTP request resulted in an exception.'); e.transient = true; throw e; } },
+    reset() { assignAttempts = {}; }
+  };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  PUSH MODAL
+// ══════════════════════════════════════════════════════════
+let selectedGroupId = null, selectedGroupName = null, runAsAccount = 'system', scheduleType = 'once', groupSearchTimer = null, assignRetries = 0;
+function openPushModal() { showPushResult('', ''); document.getElementById('intuneModal').classList.add('open'); document.getElementById('intuneScriptName').focus(); }
+function closeModal() { document.getElementById('intuneModal').classList.remove('open'); }
+document.getElementById('intuneModal').addEventListener('click', e => { if (e.target.id === 'intuneModal') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+function setRunAs(v) { runAsAccount = v; document.getElementById('runAsSystem').classList.toggle('active', v === 'system'); document.getElementById('runAsUser').classList.toggle('active', v === 'user'); }
+function toggleToggleOpt(el) { el.classList.toggle('active-green'); }
+function setSchedule(v) { scheduleType = v; ['once', 'daily', 'hourly'].forEach(s => document.getElementById('sched' + s[0].toUpperCase() + s.slice(1)).classList.toggle('active', s === v)); }
+function debounceGroupSearch(v) { clearTimeout(groupSearchTimer); if (v.length < 2) { closeGroupResults(); return; } groupSearchTimer = setTimeout(() => searchGroups(v), 350); }
+function openGroupResults() { document.getElementById('groupResults').classList.add('open'); }
+function closeGroupResults() { document.getElementById('groupResults').classList.remove('open'); }
+document.addEventListener('click', e => { if (!e.target.closest('.group-search-wrap')) closeGroupResults(); });
+
+async function searchGroups(query) {
+  const el = document.getElementById('groupResults');
+  el.innerHTML = '<div class="group-result-item loading">Searching…</div>'; openGroupResults();
+  try {
+    let list;
+    if (MODE === 'demo') list = await DemoIntune.searchGroups(query);
+    else {
+      const token = await getGraphToken();
+      const url = `https://graph.microsoft.com/v1.0/groups?$filter=startswith(displayName,'${encodeURIComponent(query.replace(/'/g, "''"))}')&$select=id,displayName&$top=15&$count=true&$orderby=displayName`;
+      const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token, ConsistencyLevel: 'eventual' } });
+      list = (await r.json()).value || [];
+    }
+    if (!list.length) { el.innerHTML = '<div class="group-result-item loading">No groups found.</div>'; return; }
+    el.innerHTML = list.map((g, i) => `<div class="group-result-item" role="button" tabindex="0" data-i="${i}">${esc(g.displayName)}</div>`).join('');
+    el.querySelectorAll('[data-i]').forEach(n => n.onclick = () => selectGroup(list[+n.dataset.i].id, list[+n.dataset.i].displayName));
+  } catch (err) { el.innerHTML = `<div class="group-result-item loading">Error: ${esc(err.message)}</div>`; }
+}
+function selectGroup(id, name) {
+  selectedGroupId = id; selectedGroupName = name;
+  document.getElementById('groupSearchInput').value = ''; closeGroupResults();
+  document.getElementById('groupSelectedName').textContent = name;
+  document.getElementById('groupSelected').style.display = 'flex';
+}
+function clearGroup() { selectedGroupId = selectedGroupName = null; document.getElementById('groupSelected').style.display = 'none'; }
+
+function buildSchedule() {
+  if (scheduleType === 'daily') return { '@odata.type': '#microsoft.graph.deviceHealthScriptDailySchedule', interval: 1, useUtc: false, time: '01:00:00' };
+  if (scheduleType === 'hourly') return { '@odata.type': '#microsoft.graph.deviceHealthScriptHourlySchedule', interval: 1 };
+  return { '@odata.type': '#microsoft.graph.deviceHealthScriptRunOnceSchedule', interval: 1, useUtc: false, time: '01:00:00', date: new Date().toISOString().split('T')[0] };
+}
+function b64(str) { return btoa(unescape(encodeURIComponent(str))); }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// Intune's /assign can throw a generic backend exception right after the script is created
+// (replication lag). It's transient, so retry with backoff before giving up.
+async function assignScriptWithRetry(scriptId, hasRemediate, attempt = 1) {
+  if (attempt === 1) await (MODE === 'demo' ? KitDemo.wait(600) : sleep(1200));
+  try {
+    if (MODE === 'demo') { await DemoIntune.assign(scriptId); return; }
+    const token = await getGraphToken();
+    const r = await fetch(`https://graph.microsoft.com/beta/deviceManagement/deviceHealthScripts/${scriptId}/assign`, {
+      method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceHealthScriptAssignments: [{ '@odata.type': '#microsoft.graph.deviceHealthScriptAssignment', target: { '@odata.type': '#microsoft.graph.groupAssignmentTarget', groupId: selectedGroupId }, runRemediationScript: !!hasRemediate, runSchedule: buildSchedule() }] })
+    });
+    if (r.ok) return;
+    const e = await r.json().catch(() => ({}));
+    throw new Error(e?.error?.message || r.statusText);
+  } catch (err) {
+    if (attempt < 3) {
+      assignRetries++;
+      showPushResult('info', `Intune isn’t ready to assign yet (common right after creating a script). Retrying in ${Math.round(2.5 * attempt)}s…`);
+      await (MODE === 'demo' ? KitDemo.wait(2500 * attempt) : sleep(2500 * attempt));
+      return assignScriptWithRetry(scriptId, hasRemediate, attempt + 1);
+    }
+    throw err;
+  }
+}
+
+function showSuccessResult(name, id) {
+  const assignNote = selectedGroupId ? `Assigned to <strong>${esc(selectedGroupName)}</strong>${assignRetries ? ` (after ${assignRetries} automatic retr${assignRetries === 1 ? 'y' : 'ies'})` : ''}.` : 'Not assigned yet. Assign groups in Intune.';
+  showPushResult('success', `✓ <strong>${esc(name)}</strong> ${MODE === 'demo' ? 'created in the demo tenant' : 'pushed to Intune'}.<br><span style="font-size:11px;color:var(--text-muted)">ID: ${esc(id)}</span><br><br>${assignNote}${MODE === 'demo' ? '' : `<br><br><a href="${INTUNE_REMEDIATIONS_URL}" target="_blank" rel="noopener">Open Intune Remediations →</a>`}`);
+}
+function showAssignFailure(name, id, hasRemediate, msg) {
+  showPushResult('error', `⚠ <strong>${esc(name)}</strong> was created, but assignment failed: ${esc(msg)}<br><br><span style="font-size:11px;color:var(--text-muted)">ID: ${esc(id)}</span><br><br>Don’t push again (that would create a duplicate). Retry just the assignment:<br><button class="tt-btn tt-btn--secondary" style="margin-top:8px" id="retryAssignBtn">Retry assignment</button>`);
+  document.getElementById('retryAssignBtn').onclick = () => retryAssignment(id, name, hasRemediate);
+}
+async function retryAssignment(id, name, hasRemediate) {
+  setPushLoading(true); assignRetries = 0;
+  try { await assignScriptWithRetry(id, hasRemediate); showSuccessResult(name, id); }
+  catch (err) { showAssignFailure(name, id, hasRemediate, err.message); }
+  finally { setPushLoading(false); }
+}
+
+async function pushToIntune() {
+  const name = document.getElementById('intuneScriptName').value.trim();
+  const desc = document.getElementById('intuneDescription').value.trim();
+  if (!name) { showPushResult('error', 'Script name is required.'); return; }
+  const detect = document.getElementById('detectCode').textContent.trim();
+  const remediate = document.getElementById('remediateCode').textContent.trim();
+  const hasRemediate = document.getElementById('remediateBlock').style.display !== 'none' && !!remediate;
+  if (!detect || document.getElementById('detectBlock').style.display === 'none') { showPushResult('error', 'Intune needs a detection script. Generate one first.'); return; }
+  setPushLoading(true); showPushResult('', ''); assignRetries = 0;
+
+  let scriptId;
+  try {
+    const payload = {
+      displayName: name, description: desc || name, publisher: Kit.tokens().publisher,
+      runAsAccount, enforceSignatureCheck: document.getElementById('optSigCheck').classList.contains('active-green'),
+      runAs32Bit: document.getElementById('opt32bit').classList.contains('active-green'),
+      detectionScriptContent: b64(detect), remediationScriptContent: hasRemediate ? b64(remediate) : b64('# No remediation script')
+    };
+    if (MODE === 'demo') scriptId = (await DemoIntune.create(payload)).id;
+    else {
+      const token = await getGraphToken();
+      const r = await fetch('https://graph.microsoft.com/beta/deviceManagement/deviceHealthScripts', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e?.error?.message || `HTTP ${r.status}`); }
+      scriptId = (await r.json()).id;
+    }
+  } catch (err) { showPushResult('error', '✕ ' + esc(err.message)); setPushLoading(false); return; }
+
+  // The script exists now. From here, failures must not lead to a second create.
+  if (selectedGroupId) {
+    try { await assignScriptWithRetry(scriptId, hasRemediate); }
+    catch (err) { showAssignFailure(name, scriptId, hasRemediate, err.message); setPushLoading(false); return; }
+  }
+  showSuccessResult(name, scriptId);
+  setPushLoading(false);
+}
+function setPushLoading(on) {
+  document.getElementById('modalPushBtn').disabled = on;
+  document.getElementById('pushSpinner').className = on ? 'spinner active' : 'spinner';
+  document.getElementById('pushBtnText').textContent = on ? 'Pushing…' : 'Push to Intune';
+}
+function showPushResult(type, msg) {
+  const el = document.getElementById('pushResult');
+  if (!type) { el.className = 'push-result'; el.innerHTML = ''; return; }
+  el.className = `tt-alert tt-alert--${type} push-result visible`;
+  el.innerHTML = msg;
+}
+
+// ══════════════════════════════════════════════════════════
+//  UTIL + BOOT
+// ══════════════════════════════════════════════════════════
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function renderMode() {
+  document.getElementById('modeChip').className = 'mode-chip mode-' + MODE;
+  document.getElementById('modeText').textContent = MODE === 'demo' ? 'Demo' : MODE === 'live' ? 'Intune connected' : 'Offline';
+}
+if (MODE === 'demo') {
+  KitDemo.panel({
+    sections: [
+      { title: 'Play an example', chips: PRESETS.map((p, i) => ({ label: p.label, onClick: () => { setExample(i); generate(); } })) },
+      { title: 'Push to Intune', actions: [
+        { label: '☁ Open push dialog (assign to a group)', onClick: () => { if (!lastResult) { setExample(2); generate().then(() => { openPushModal(); }); } else openPushModal(); } }
+      ] }
+    ],
+    onReset: () => {
+      DemoIntune.reset(); lastResult = null; clearGroup(); closeModal(); hideError();
+      document.getElementById('problemInput').value = '';
+      document.getElementById('outputSection').classList.remove('visible');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+}
+renderMode(); renderProviderBar(); renderExamples(); renderDemoHint();
+</script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autopilot Import &amp; Check · {{portalName}} Kit</title>
+<link rel="stylesheet" href="../assets/kit-theme-dark.css">
+<script src="../kit-config.js"></script>
+<script src="../kit-brand.js"></script>
+<style>
+  .g-wrap { max-width: 880px; margin: 0 auto; padding: 24px 20px 40px; }
+  .g-nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .g-nav a { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border-glass); color: var(--text-secondary); text-decoration: none; }
+  .g-nav a:hover { border-color: var(--brand-pale); color: var(--text-primary); }
+  .g-nav a.on { background: rgba(var(--brand-rgb), .45); border-color: var(--brand-pale); color: var(--text-primary); }
+  .g-nav .sp { flex: 1; }
+  .g-head { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .g-head img { height: 40px; width: auto; max-width: 110px; object-fit: contain; }
+  h1 { font-size: 1.6rem; line-height: 1.2; }
+  .g-lede { color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin: 6px 0 18px; }
+  .g-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .g-cols { grid-template-columns: 1fr; } }
+  .g-box { background: var(--glass-card); border: 1px solid var(--border-glass); border-radius: 12px; padding: 14px 16px; break-inside: avoid; }
+  .g-box.wide { grid-column: 1 / -1; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--brand-pale); margin-bottom: 8px; }
+  .g-box p, .g-box li { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+  .g-box ol, .g-box ul { padding-left: 20px; display: grid; gap: 3px; }
+  .g-box b { color: var(--text-primary); }
+  code, pre { font-family: var(--font-mono); font-size: 12px; }
+  code { background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 4px; color: var(--text-primary); word-break: break-word; }
+  pre { background: rgba(0,0,0,.35); border: 1px solid var(--border-glass); border-radius: 8px; padding: 10px 12px; margin: 6px 0; overflow-x: auto; color: var(--text-output); white-space: pre-wrap; word-break: break-word; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border-glass); vertical-align: top; color: var(--text-secondary); }
+  th { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  td:first-child { color: var(--text-primary); white-space: nowrap; }
+  .g-warn { border-color: rgba(251,191,36,.35); background: var(--color-warning-bg); }
+  .g-warn h2 { color: var(--color-warning); }
+  .g-foot { margin-top: 22px; font-size: 11.5px; color: var(--text-muted); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .g-print { font: 600 12px var(--font-ui); padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border-glass); background: none; color: var(--text-secondary); cursor: pointer; }
+  @media print {
+    @page { size: letter; margin: 10mm; }
+    body, .tt-app { background: #fff !important; color: #111 !important; }
+    .tt-app::before, .g-nav, .ttkit-banner, .ttdemo-banner { display: none !important; }
+    .g-box { background: #fff !important; border-color: #ccc !important; }
+    h1, .g-box b, td:first-child, code { color: #111 !important; }
+    h2 { color: #1a3e8c !important; }
+    .g-lede, .g-box p, .g-box li, td, th, .g-foot { color: #333 !important; }
+    code, pre { background: #f3f4f6 !important; color: #111 !important; border-color: #ddd !important; }
+    .tt-app { display: block !important; min-height: 0 !important; }
+    .g-wrap { padding: 0 1mm; max-width: none; }
+    h1 { font-size: 18px; }
+    .g-head img { height: 26px; }
+    .g-lede { font-size: 11px; margin: 2px 0 8px; }
+    .g-cols { gap: 7px; grid-template-columns: 1fr 1fr !important; }
+    .g-box { padding: 7px 10px; border-radius: 6px; }
+    h2 { font-size: 10px; margin-bottom: 4px; }
+    .g-box p, .g-box li { font-size: 10px; line-height: 1.4; }
+    .g-box ol, .g-box ul { gap: 1px; padding-left: 16px; }
+    code, pre { font-size: 9px; }
+    pre { padding: 5px 8px; margin: 3px 0; }
+    table { font-size: 9.5px; } th, td { padding: 2px 5px; } th { font-size: 8.5px; }
+    .g-foot { margin-top: 8px; font-size: 8.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="tt-app">
+<div class="g-wrap">
+  <nav class="g-nav" aria-label="Guides">
+    <a href="../index.html">&larr; {{portalName}}</a>
+    <a href="getting-started.html">Getting Started</a><a href="autopilot.html" class="on">Autopilot Import &amp; Check</a><a href="remediation.html">Remediations Guide</a><a href="win32.html">Win32 Packaging Guide</a>
+    <span class="sp"></span>
+    <button class="g-print" type="button" onclick="window.print()">Print / PDF</button>
+  </nav>
+  <div class="g-head"><img data-kit-logo src="../assets/kit-logo.svg" alt=""><h1>Autopilot Import &amp; Check</h1></div>
+  <p class="g-lede">Get devices into Windows Autopilot with the right group tag, and check whether any device is ready for a clean OOBE.</p>
+  <div class="g-cols">
+    <section class="g-box wide"><h2>1 · Collect hardware hashes</h2><p>On each device (admin PowerShell, or Shift+F10 during OOBE):</p>
+      <pre>Set-ExecutionPolicy -Scope Process RemoteSigned -Force
+Install-Script -Name Get-WindowsAutopilotInfo -Force
+Get-WindowsAutopilotInfo -OutputFile C:\HWID\hashes.csv</pre>
+      <p>Combine files from many devices into one CSV with a single header row. Vendors and resellers can also supply hashes when you order.</p></section>
+    <section class="g-box "><h2>2 · Upload and check</h2><p>Every row is checked before import. Rows are skipped, with the reason shown, when the hash is missing, truncated, or not valid base64, the serial is missing, or the serial or hash appears twice.</p><p><b>Offline?</b> Use <i>Download clean CSV</i> and upload it in Intune: Devices &rsaquo; Enrollment &rsaquo; Windows Autopilot &rsaquo; Devices &rsaquo; Import.</p></section>
+    <section class="g-box "><h2>3 · Group tags</h2><p>A tag set at import puts devices straight into the right profile. Match it with a dynamic device group:</p>
+      <pre>(device.devicePhysicalIds -any (_ -eq "[OrderID]:{{groupTagFirst}}"))</pre>
+      <p>Replace the tag with your own, one group per tag.</p></section>
+    <section class="g-box wide"><h2>Import errors</h2><table>
+      <tr><th>Error</th><th>What to do</th></tr>
+      <tr><td>ZtdDeviceAlreadyAssigned</td><td>Already in your tenant. Nothing to do, or delete the old record to re-import.</td></tr>
+      <tr><td>ZtdDeviceAssignedToOtherTenant</td><td>Owned by another organization. Ask the previous owner or reseller to deregister it.</td></tr>
+      <tr><td>ZtdDeviceBadHardwareHash</td><td>Damaged hash. Re-run Get-WindowsAutopilotInfo on the device.</td></tr>
+      <tr><td>Throttled (429)</td><td>The tool retries automatically. If it still fails, wait a minute and import again.</td></tr>
+      <tr><td>Pending a long time</td><td>Normal for busy tenants. Allow up to 15 minutes, then use Refresh status.</td></tr>
+    </table></section>
+    <section class="g-box "><h2>Readiness score</h2><table>
+      <tr><th>Check</th><th>Points</th></tr>
+      <tr><td>Registered in Autopilot</td><td>30</td></tr>
+      <tr><td>Deployment profile assigned</td><td>35</td></tr>
+      <tr><td>Group tag set</td><td>15</td></tr>
+      <tr><td>Checked in within 45 days</td><td>10</td></tr>
+      <tr><td>Not already enrolled</td><td>10 (5 if enrolled)</td></tr>
+    </table><p>90+ ready &middot; 65+ mostly ready &middot; 30+ needs attention.</p></section>
+    <section class="g-box g-warn"><h2>Good to know</h2><ul>
+      <li>Profile assignment usually follows import within 5–15 minutes. A just-imported device scores lower until it does.</li>
+      <li>The sample CSVs in <code>samples/</code> use made-up hashes. Use them to see the checks and demo mode; Intune will reject them.</li>
+      <li>Needs the <code>DeviceManagementServiceConfig.ReadWrite.All</code> and <code>DeviceManagementManagedDevices.Read.All</code> permissions.</li>
+    </ul></section>
+  </div>
+  <div class="g-foot"><span>&copy; {{year}} {{districtShort}} {{deptName}} &middot; {{credit}} &middot; MIT License</span><span>{{portalName}} Kit &middot; Autopilot Import &amp; Check</span></div>
+</div>
+</div>
+</body>
+</html>
